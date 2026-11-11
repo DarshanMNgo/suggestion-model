@@ -156,8 +156,8 @@ td{color:#59645a}td b{color:#315b36}
 .product-tile small{font-size:10px;color:#7c887c}
 .owner-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;align-items:end}
 .owner-form label{display:grid;gap:7px;font-size:12px;font-weight:700;color:#435347}
-.owner-form input,.owner-form select,.chat-form input{width:100%;min-height:45px;border:1px solid #dfe6dc;background:#fbfcfa;border-radius:9px;padding:11px 12px;color:#26352a;font:inherit;font-size:14px;outline:none}
-.owner-form input:focus,.owner-form select:focus,.chat-form input:focus{border-color:#86a975;box-shadow:0 0 0 3px #eaf2e4}
+.owner-form input,.owner-form select{width:100%;min-height:45px;border:1px solid #dfe6dc;background:#fbfcfa;border-radius:9px;padding:11px 12px;color:#26352a;font:inherit;font-size:14px;outline:none}
+.owner-form input:focus,.owner-form select:focus{border-color:#86a975;box-shadow:0 0 0 3px #eaf2e4}
 .owner-form .primary-button{min-height:45px;font-size:13px;white-space:nowrap}
 .one-column{grid-template-columns:1fr}
 .one-column .primary-button{width:100%}

@@ -7,7 +7,7 @@ import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 ROOT = Path(__file__).resolve().parents[1]
 MODEL_PATH = ROOT / "models" / "demand_model.joblib"
@@ -161,46 +161,3 @@ def forecast(
         "evaluation": bundle["metrics"],
         "note": "Estimates use the trained sample sales history. Manually entered sales are saved separately and do not retrain this model automatically."
     }
-
-class HelpQuestion(BaseModel):
-    question: str = Field(min_length=1, max_length=500)
-    product: str = ""
-    suggested_order_quantity: int = 0
-    expected_total_demand: float = 0
-    current_stock: int = 0
-    lead_time_demand: float = 0
-    safety_stock: int = 0
-    language: str = "en"
-
-@app.post("/assistant")
-def assistant_help(payload: HelpQuestion):
-    q = payload.question.casefold()
-    if payload.language == "kn":
-        if payload.suggested_order_quantity > 0:
-            answer = f"{payload.product} ವಸ್ತುವಿಗೆ ಸುಮಾರು {payload.suggested_order_quantity} ಘಟಕಗಳನ್ನು ಖರೀದಿಸಲು ಪರಿಗಣಿಸಿ. ಈ ಅಂದಾಜು ಸರಕು ಬರುವವರೆಗೆ ಆಗಬಹುದಾದ ಮಾರಾಟ, ಹೆಚ್ಚುವರಿ ಸ್ಟಾಕ್ ಮತ್ತು ಈಗಿರುವ ಸ್ಟಾಕ್ ಆಧರಿಸಿದೆ."
-        else:
-            answer = f"{payload.product} ವಸ್ತುವಿಗೆ ಈಗ ಹೆಚ್ಚುವರಿ ಖರೀದಿ ಅಗತ್ಯವಿಲ್ಲವೆಂದು ಅಂದಾಜು ತೋರಿಸುತ್ತದೆ. ಆದರೂ ಶೆಲ್ಫ್ ಮತ್ತು ಬಾಕಿ ಗ್ರಾಹಕ ಆರ್ಡರ್‌ಗಳನ್ನು ಪರಿಶೀಲಿಸಿ."
-        if any(word in q for word in ["ಮಾರಾಟ", "ಅಂದಾಜು", "ಎಷ್ಟು"]):
-            answer = f"ಆಯ್ಕೆ ಮಾಡಿದ ಅವಧಿಯಲ್ಲಿ {payload.product} ವಸ್ತುವಿನ ಅಂದಾಜು ಮಾರಾಟ {payload.expected_total_demand:.1f} ಘಟಕಗಳು. ಇದು ಮಾದರಿ ಮಾರಾಟದ ಮಾಹಿತಿಯ ಆಧಾರದ ಅಂದಾಜು ಮಾತ್ರ."
-        elif any(word in q for word in ["ಸ್ಟಾಕ್", "ಉಳಿದ", "ಇದೆ"]):
-            answer = f"ನೀವು {payload.product} ವಸ್ತುವಿನ {payload.current_stock} ಘಟಕಗಳಿವೆ ಎಂದು ನಮೂದಿಸಿದ್ದೀರಿ. ಸರಕು ಬರುವವರೆಗೆ ಸುಮಾರು {payload.lead_time_demand:.1f} ಘಟಕಗಳು ಮಾರಾಟವಾಗಬಹುದು ಎಂದು ಅಂದಾಜು. ನೀವು {payload.safety_stock} ಹೆಚ್ಚುವರಿ ಘಟಕಗಳನ್ನು ಇಡಲು ಬಯಸಿದ್ದೀರಿ."
-        return {"answer": answer}
-    if any(word in q for word in ["order", "buy", "restock", "ಮತ್ತೆ", "ಖರೀದಿ"]):
-        if payload.suggested_order_quantity > 0:
-            answer = (f"For {payload.product}, the estimate suggests considering about "
-                      f"{payload.suggested_order_quantity} units. This is based on expected sales "
-                      f"before delivery, your backup stock, and the stock you entered.")
-        else:
-            answer = (f"For {payload.product}, the numbers you entered do not currently show an extra order need. "
-                      "Please still check the shelf and any pending customer orders.")
-    elif any(word in q for word in ["stock", "left", "ಅಂಗಡಿ", "ಸ್ಟಾಕ್"]):
-        answer = (f"You entered {payload.current_stock} units of {payload.product}. "
-                  f"The estimate expects about {payload.lead_time_demand:.1f} units to sell while waiting "
-                  f"for delivery, and you asked to keep {payload.safety_stock} extra units.")
-    elif any(word in q for word in ["forecast", "sell", "demand", "ಮಾರಾಟ"]):
-        answer = (f"The estimate is about {payload.expected_total_demand:.1f} units of {payload.product} "
-                  "over the selected forecast period. It is a guide based on the sample sales history, not a guarantee.")
-    else:
-        answer = ("I can explain the expected sales, the stock you entered, or the suggested buying quantity. "
-                  "Try asking: 'Why should I order this much?'")
-    return {"answer": answer}
