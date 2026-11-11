@@ -30,13 +30,10 @@ const WORDS = {
     showAdvice:"Show buying suggestion", expected:"Expected sales", order:"Consider buying",
     enough:"Your stock may be enough for now", units:"units", beforeDelivery:"Expected sales before delivery",
     current:"Stock in your shop", extra:"Extra stock you want to keep", estimate:"This is an estimate. Check your shelf and expiry dates before buying.",
-    helpTitle:"Ask your shop helper", helpSub:"Ask why an item needs restocking or what the estimate means.",
-    ask:"Type your question…", send:"Ask", voice:"Voice assistant (coming later)",
     language:"ಕನ್ನಡ", noProducts:"No products found", saved:"Saved successfully", loading:"Loading your shop…",
     today:"Today", date:"Sale date", picture:"Product", action:"Action", stockStatus:"Available",
     restockBadge:"Low stock", okay:"Stock available", refresh:"Refresh",
     quickTip:"Tip: Record sales each day and update stock after receiving new goods.",
-    chatbotIntro:"Hello! I can explain the buying suggestion and the numbers shown here."
   },
   kn: {
     menu:"ಮೆನು", shop:"ನನ್ನ ಅಂಗಡಿ", stock:"ಸ್ಟಾಕ್ ಮತ್ತು ಎಚ್ಚರಿಕೆ", sales:"ದೈನಂದಿನ ಮಾರಾಟ",
@@ -53,13 +50,10 @@ const WORDS = {
     showAdvice:"ಖರೀದಿ ಸಲಹೆ ತೋರಿಸಿ", expected:"ಅಂದಾಜು ಮಾರಾಟ", order:"ಖರೀದಿಸಲು ಪರಿಗಣಿಸಿ",
     enough:"ಈಗಿರುವ ಸ್ಟಾಕ್ ಸಾಕಾಗಬಹುದು", units:"ಘಟಕಗಳು", beforeDelivery:"ಸರಕು ಬರುವ ಮೊದಲು ಅಂದಾಜು ಮಾರಾಟ",
     current:"ಅಂಗಡಿಯಲ್ಲಿರುವ ಸ್ಟಾಕ್", extra:"ನೀವು ಇಡಲು ಬಯಸುವ ಹೆಚ್ಚುವರಿ ಸ್ಟಾಕ್", estimate:"ಇದು ಅಂದಾಜು ಮಾತ್ರ. ಖರೀದಿಸುವ ಮೊದಲು ಸ್ಟಾಕ್ ಮತ್ತು ಅವಧಿ ಮುಗಿಯುವ ದಿನಾಂಕ ಪರಿಶೀಲಿಸಿ.",
-    helpTitle:"ನಿಮ್ಮ ಅಂಗಡಿ ಸಹಾಯಕನನ್ನು ಕೇಳಿ", helpSub:"ಖರೀದಿ ಸಲಹೆ ಅಥವಾ ಅಂದಾಜಿನ ಬಗ್ಗೆ ಪ್ರಶ್ನಿಸಿ.",
-    ask:"ನಿಮ್ಮ ಪ್ರಶ್ನೆಯನ್ನು ಬರೆಯಿರಿ…", send:"ಕೇಳಿ", voice:"ಧ್ವನಿ ಸಹಾಯಕ (ನಂತರ ಲಭ್ಯ)",
     language:"English", noProducts:"ವಸ್ತುಗಳು ಕಂಡುಬಂದಿಲ್ಲ", saved:"ಯಶಸ್ವಿಯಾಗಿ ಉಳಿಸಲಾಗಿದೆ", loading:"ಅಂಗಡಿ ಮಾಹಿತಿ ಲೋಡ್ ಆಗುತ್ತಿದೆ…",
     today:"ಇಂದು", date:"ಮಾರಾಟದ ದಿನಾಂಕ", picture:"ವಸ್ತು", action:"ಕ್ರಿಯೆ", stockStatus:"ಲಭ್ಯವಿದೆ",
     restockBadge:"ಸ್ಟಾಕ್ ಕಡಿಮೆ", okay:"ಸ್ಟಾಕ್ ಲಭ್ಯವಿದೆ", refresh:"ಮತ್ತೆ ಲೋಡ್ ಮಾಡಿ",
     quickTip:"ಸಲಹೆ: ಪ್ರತಿದಿನ ಮಾರಾಟ ದಾಖಲಿಸಿ ಮತ್ತು ಹೊಸ ಸರಕು ಬಂದಾಗ ಸ್ಟಾಕ್ ನವೀಕರಿಸಿ.",
-    chatbotIntro:"ನಮಸ್ಕಾರ! ಖರೀದಿ ಸಲಹೆ ಮತ್ತು ಇಲ್ಲಿ ತೋರಿಸಿರುವ ಸಂಖ್ಯೆಗಳ ಬಗ್ಗೆ ವಿವರಿಸಬಹುದು."
   }
 };
 
@@ -81,9 +75,6 @@ export default function App() {
   const [apiReady, setApiReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
-  const [question, setQuestion] = useState("");
-  const [chat, setChat] = useState([]);
-
   const refreshData = useCallback(async () => {
     const [healthRes, productsRes, inventoryRes, salesRes] = await Promise.all([
       fetch(`${API_BASE}/health`), fetch(`${API_BASE}/products`),
@@ -146,20 +137,6 @@ export default function App() {
     } catch(err) { setNotice(err.message); } finally { setBusy(false); }
   }
 
-  async function askHelper(e) {
-    e.preventDefault(); if (!question.trim()) return;
-    const q = question.trim(); setChat(items => [...items, {from:"you", text:q}]); setQuestion("");
-    try {
-      const res = await fetch(`${API_BASE}/assistant`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({
-        question:q, product, suggested_order_quantity:forecast?.suggested_order_quantity || 0,
-        expected_total_demand:forecast?.expected_total_demand || 0, current_stock:Number(stock),
-        lead_time_demand:forecast?.lead_time_demand || 0, safety_stock:Number(safety), language:lang
-      })});
-      const data = await res.json(); if (!res.ok) throw new Error(data.detail || "Helper is unavailable.");
-      setChat(items => [...items, {from:"helper", text:data.answer}]);
-    } catch(err) { setChat(items => [...items, {from:"helper", text:err.message}]); }
-  }
-
   return (
     <div className="app-shell owner-friendly">
       <aside className="sidebar">
@@ -179,7 +156,6 @@ export default function App() {
           <div><span className="eyebrow">{lang === "kn" ? "ನಿಮ್ಮ ಅಂಗಡಿಯ ದೈನಂದಿನ ಮಾಹಿತಿ" : "YOUR DAILY SHOP UPDATE"}</span><h1>{t.welcome} 👋</h1><p>{t.subtitle}</p></div>
           <div className="header-actions">
             <button className="language-button" onClick={() => setLang(lang === "en" ? "kn" : "en")}>{lang === "en" ? "ಕನ್ನಡ" : "English"}</button>
-            <span className="voice-icon" title={t.voice} aria-label={t.voice}>🎙️</span>
             <div className={`connection-pill ${apiReady ? "online" : "offline"}`}><i />{apiReady ? t.connected : t.connecting}</div>
           </div>
         </header>
@@ -242,13 +218,16 @@ export default function App() {
 
         {forecast && <section className="panel friendly-daily"><div className="panel-heading"><div><span className="eyebrow">{t.expected.toUpperCase()}</span><h2>{forecast.product} · {forecast.expected_total_demand} {t.units}</h2></div></div><div className="bar-chart">{forecast.daily_forecast.map(item => <div className="bar-column" key={item.date}><b>{item.expected_units}</b><div className="bar-track"><div className="bar-fill" style={{height:`${Math.max(5,item.expected_units/maxDemand*100)}%`}}/></div><small>{new Date(item.date+"T00:00:00").toLocaleDateString(lang === "kn" ? "kn-IN" : "en-IN",{day:"2-digit",month:"short"})}</small></div>)}</div></section>}
 
-        <section className="panel chat-panel">
-          <div className="panel-heading"><div><span className="eyebrow">05 · SHOP HELPER</span><h2>{t.helpTitle}</h2><p>{t.helpSub}</p></div><span className="panel-icon">💬</span></div>
-          <div className="chat-messages"><div className="chat-bubble helper-bubble">{t.chatbotIntro}</div>{chat.map((m,i)=><div key={i} className={m.from === "you" ? "chat-bubble user-bubble" : "chat-bubble helper-bubble"}>{m.text}</div>)}</div>
-          <form className="chat-form" onSubmit={askHelper}><input value={question} onChange={e=>setQuestion(e.target.value)} placeholder={t.ask}/><button className="primary-button" disabled={!apiReady || !question.trim()}>{t.send}</button></form>
-        </section>
-
         <footer className="footer-note">ℹ️ {t.estimate} {lang === "kn" ? "ದಾಖಲಿಸಿದ ಮಾರಾಟಗಳು ಪ್ರತ್ಯೇಕವಾಗಿ ಉಳಿಯುತ್ತವೆ; ಈ ಮಾದರಿ ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಮರುತರಬೇತಿ ಆಗುವುದಿಲ್ಲ." : "Recorded sales are saved separately; they do not automatically retrain the forecasting model."}</footer>
+
+      <div
+        className="floating-assistant-icon"
+        role="img"
+        aria-label={lang === "kn" ? "AI ಸಹಾಯಕ ಶೀಘ್ರದಲ್ಲೇ" : "AI assistant coming soon"}
+        title={lang === "kn" ? "AI ಸಹಾಯಕ — ಶೀಘ್ರದಲ್ಲೇ" : "AI assistant — coming soon"}
+      >
+        ✦
+      </div>
       </main>
     </div>
   );

@@ -142,7 +142,6 @@ td{color:#59645a}td b{color:#315b36}
 /* Kirana owner features: product cards, stock, sales, alerts and helper */
 .header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .language-button{border:1px solid #dce6d7;background:#fff;color:#294b34;border-radius:9px;padding:9px 13px;font-size:12px;font-weight:700;cursor:pointer}
-.voice-icon{width:38px;height:38px;border-radius:11px;background:#fff;border:1px solid #e2e9de;display:grid;place-items:center;font-size:19px;cursor:default}
 .friendly-metrics{margin:0 0 17px}
 .friendly-metrics .metric-card{padding:18px}
 .friendly-metrics .metric-top{font-size:12px;gap:10px}
@@ -180,14 +179,6 @@ td{color:#59645a}td b{color:#315b36}
 .forecast-summary .order-number b{font-size:42px}
 .forecast-summary p{font-size:11px;color:#657366;margin:8px 0}
 .forecast-summary>small{display:block;font-size:10px;color:#899489;line-height:1.5;margin-top:9px}
-.chat-panel{margin-top:16px}
-.chat-messages{display:flex;flex-direction:column;gap:9px;max-height:250px;overflow:auto;padding:4px 0 12px}
-.chat-bubble{max-width:85%;padding:11px 13px;border-radius:12px;font-size:12px;line-height:1.55}
-.helper-bubble{background:#f0f5ec;color:#455747;align-self:flex-start;border-bottom-left-radius:3px}
-.user-bubble{background:#294b34;color:#fff;align-self:flex-end;border-bottom-right-radius:3px}
-.chat-form{display:flex;gap:9px}
-.chat-form input{flex:1;min-width:0}
-.chat-form .primary-button{margin:0;padding:10px 18px}
 .owner-friendly .notice{font-size:12px}
 @media(max-width:1100px){.owner-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){
@@ -200,7 +191,35 @@ td{color:#59645a}td b{color:#315b36}
  .alert-row .advice-tag{font-size:9px;padding:5px 7px}
  .recent-row{grid-template-columns:1fr auto}
  .recent-row small{grid-column:1/-1}
- .chat-form{flex-direction:column}
- .chat-form .primary-button{width:100%}
- .chat-bubble{max-width:95%}
+}
+
+
+/* Floating AI assistant marker — visual only, no chat or voice action */
+.floating-assistant-icon{
+  position:fixed;
+  right:26px;
+  bottom:26px;
+  z-index:20;
+  width:58px;
+  height:58px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:#294b34;
+  color:#eaf5df;
+  border:3px solid #fff;
+  box-shadow:0 8px 24px rgba(24,55,34,.24);
+  font-family:Manrope,sans-serif;
+  font-size:30px;
+  font-weight:700;
+  line-height:1;
+  user-select:none;
+}
+@media(max-width:700px){
+  .floating-assistant-icon{
+    right:17px;
+    bottom:17px;
+    width:54px;
+    height:54px;
+  }
 }
