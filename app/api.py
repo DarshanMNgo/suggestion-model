@@ -83,7 +83,7 @@ def update_inventory(payload: InventoryUpdate):
             stock=excluded.stock, low_stock_threshold=excluded.low_stock_threshold,
             updated_at=excluded.updated_at""",
             (payload.product, payload.stock, payload.low_stock_threshold, date.today().isoformat()))
-    return {"saved": True, **payload.model_dump()}
+    return {"saved": True, "product": payload.product, "stock": payload.stock, "low_stock_threshold": payload.low_stock_threshold}
 
 class SaleEntry(BaseModel):
     product: str = Field(min_length=1, max_length=120)
@@ -170,10 +170,21 @@ class HelpQuestion(BaseModel):
     current_stock: int = 0
     lead_time_demand: float = 0
     safety_stock: int = 0
+    language: str = "en"
 
 @app.post("/assistant")
 def assistant_help(payload: HelpQuestion):
     q = payload.question.casefold()
+    if payload.language == "kn":
+        if payload.suggested_order_quantity > 0:
+            answer = f"{payload.product} ವಸ್ತುವಿಗೆ ಸುಮಾರು {payload.suggested_order_quantity} ಘಟಕಗಳನ್ನು ಖರೀದಿಸಲು ಪರಿಗಣಿಸಿ. ಈ ಅಂದಾಜು ಸರಕು ಬರುವವರೆಗೆ ಆಗಬಹುದಾದ ಮಾರಾಟ, ಹೆಚ್ಚುವರಿ ಸ್ಟಾಕ್ ಮತ್ತು ಈಗಿರುವ ಸ್ಟಾಕ್ ಆಧರಿಸಿದೆ."
+        else:
+            answer = f"{payload.product} ವಸ್ತುವಿಗೆ ಈಗ ಹೆಚ್ಚುವರಿ ಖರೀದಿ ಅಗತ್ಯವಿಲ್ಲವೆಂದು ಅಂದಾಜು ತೋರಿಸುತ್ತದೆ. ಆದರೂ ಶೆಲ್ಫ್ ಮತ್ತು ಬಾಕಿ ಗ್ರಾಹಕ ಆರ್ಡರ್‌ಗಳನ್ನು ಪರಿಶೀಲಿಸಿ."
+        if any(word in q for word in ["ಮಾರಾಟ", "ಅಂದಾಜು", "ಎಷ್ಟು"]):
+            answer = f"ಆಯ್ಕೆ ಮಾಡಿದ ಅವಧಿಯಲ್ಲಿ {payload.product} ವಸ್ತುವಿನ ಅಂದಾಜು ಮಾರಾಟ {payload.expected_total_demand:.1f} ಘಟಕಗಳು. ಇದು ಮಾದರಿ ಮಾರಾಟದ ಮಾಹಿತಿಯ ಆಧಾರದ ಅಂದಾಜು ಮಾತ್ರ."
+        elif any(word in q for word in ["ಸ್ಟಾಕ್", "ಉಳಿದ", "ಇದೆ"]):
+            answer = f"ನೀವು {payload.product} ವಸ್ತುವಿನ {payload.current_stock} ಘಟಕಗಳಿವೆ ಎಂದು ನಮೂದಿಸಿದ್ದೀರಿ. ಸರಕು ಬರುವವರೆಗೆ ಸುಮಾರು {payload.lead_time_demand:.1f} ಘಟಕಗಳು ಮಾರಾಟವಾಗಬಹುದು ಎಂದು ಅಂದಾಜು. ನೀವು {payload.safety_stock} ಹೆಚ್ಚುವರಿ ಘಟಕಗಳನ್ನು ಇಡಲು ಬಯಸಿದ್ದೀರಿ."
+        return {"answer": answer}
     if any(word in q for word in ["order", "buy", "restock", "ಮತ್ತೆ", "ಖರೀದಿ"]):
         if payload.suggested_order_quantity > 0:
             answer = (f"For {payload.product}, the estimate suggests considering about "
