@@ -4,15 +4,24 @@ Run: uvicorn app.api:app --reload
 """
 from datetime import timedelta
 from pathlib import Path
-from typing import Optional
 
 import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 
 ROOT = Path(__file__).resolve().parents[1]
 MODEL_PATH = ROOT / "models" / "demand_model.joblib"
 app = FastAPI(title="Kirana Demand Suggestion API", version="1.0.0")
+
+# Allow the local Vite development server to call this API from the browser.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def load_bundle():
