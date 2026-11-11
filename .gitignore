@@ -6,3 +6,8 @@ __pycache__/
 .DS_Store
 data/*.csv
 models/*.joblib
+
+# React / Vite frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
