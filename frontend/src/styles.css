@@ -92,3 +92,48 @@ td{color:#59645a}td b{color:#315b36}
 .notice.error{background:#fff4ed;border:1px solid #f0d8c8;color:#86502e}
 @media(max-width:1100px){.main-content{padding:28px 24px}.metric-grid{grid-template-columns:repeat(2,1fr)}.content-grid{grid-template-columns:1fr}}
 @media(max-width:700px){.sidebar{position:static;width:auto;height:auto;padding:15px 17px}.brand{padding:0}.side-label,.nav-item,.sidebar-bottom{display:none}.main-content{margin:0;padding:22px 15px}.topbar{align-items:flex-start;gap:12px;flex-direction:column}.topbar h1{font-size:23px}.metric-grid{gap:9px}.metric-card{padding:13px}.metric-card strong{font-size:19px}.input-row{grid-template-columns:1fr}.panel{padding:16px}.period-options{flex-wrap:wrap}}
+
+
+/* Owner-friendly dashboard improvements */
+.owner-friendly .side-label{margin-top:4px}
+.owner-friendly .nav-item{font-size:14px;padding:13px}
+.owner-friendly .topbar h1{font-size:30px;letter-spacing:-.7px}
+.friendly-intro{display:flex;align-items:center;justify-content:space-between;background:#eaf3e3;border:1px solid #dce9d3;border-radius:16px;padding:22px 25px;margin-bottom:17px}
+.friendly-intro h2{font-family:Manrope,sans-serif;font-size:21px;margin:7px 0 5px;color:#294b34}
+.friendly-intro p{font-size:13px;color:#607060;margin:0;line-height:1.5}
+.intro-emoji{font-size:42px;padding:8px 18px}
+.friendly-grid{grid-template-columns:minmax(0,1.15fr) minmax(290px,.85fr);align-items:stretch}
+.friendly-controls{gap:17px}
+.friendly-controls label{font-size:14px;color:#344638;gap:9px}
+.friendly-controls select,.friendly-controls input{font-size:15px;padding:13px 14px;border-radius:10px;min-height:47px}
+.friendly-controls .field-help{font-size:11px;color:#879287;font-weight:400;line-height:1.4}
+.period-label{font-size:13px;font-weight:700;color:#344638;margin-bottom:-8px}
+.friendly-controls .period{font-size:13px;padding:10px 17px}
+.friendly-button{font-size:14px;padding:15px 17px;min-height:50px}
+.friendly-order{background:#fbfdf8;border-color:#e1eadb}
+.friendly-order .panel-heading p{line-height:1.5}
+.suggestion-copy{font-size:14px;line-height:1.5;color:#536454;margin-top:8px}
+.friendly-order .order-number{margin:12px 0 3px}
+.friendly-order .order-number b{font-size:58px}
+.friendly-order .recommendation{font-size:14px;line-height:1.65;margin:10px 0 18px}
+.friendly-order .calculation>div{font-size:12px;padding:10px 0}
+.friendly-order .calculation b{font-size:12px}
+.simple-note{font-size:11px;line-height:1.5;color:#818b80;background:#f2f6ee;border-radius:9px;padding:10px 12px;margin:14px 0 0}
+.friendly-order .empty-state{font-size:14px;line-height:1.65;padding:42px 12px}
+.friendly-daily .panel-heading p{font-size:12px;margin-top:5px}
+.friendly-daily .bar-chart{height:180px}
+.friendly-daily .bar-track{height:125px}
+.friendly-daily .bar-column small{font-size:10px}
+.friendly-daily .chart-caption{font-size:11px;margin:14px 0 5px}
+.owner-friendly .footer-note{font-size:11px;line-height:1.6;margin-top:4px}
+@media(max-width:1100px){.friendly-grid{grid-template-columns:1fr}}
+@media(max-width:700px){
+  .friendly-intro{padding:17px;gap:8px}
+  .friendly-intro h2{font-size:18px}
+  .friendly-intro p{font-size:12px}
+  .intro-emoji{font-size:32px;padding:4px}
+  .owner-friendly .topbar h1{font-size:24px}
+  .friendly-controls label{font-size:13px}
+  .friendly-order .order-number b{font-size:48px}
+  .friendly-daily .bar-chart{gap:5px}
+}
