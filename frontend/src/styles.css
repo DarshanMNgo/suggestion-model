@@ -137,3 +137,70 @@ td{color:#59645a}td b{color:#315b36}
   .friendly-order .order-number b{font-size:48px}
   .friendly-daily .bar-chart{gap:5px}
 }
+
+
+/* Kirana owner features: product cards, stock, sales, alerts and helper */
+.header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.language-button{border:1px solid #dce6d7;background:#fff;color:#294b34;border-radius:9px;padding:9px 13px;font-size:12px;font-weight:700;cursor:pointer}
+.voice-icon{width:38px;height:38px;border-radius:11px;background:#fff;border:1px solid #e2e9de;display:grid;place-items:center;font-size:19px;cursor:default}
+.friendly-metrics{margin:0 0 17px}
+.friendly-metrics .metric-card{padding:18px}
+.friendly-metrics .metric-top{font-size:12px;gap:10px}
+.friendly-metrics .metric-top span{font-size:19px}
+.friendly-metrics .metric-card strong{font-size:27px}
+.friendly-metrics .metric-card small{font-size:11px}
+.product-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px;margin:0 0 20px}
+.product-tile{display:flex;flex-direction:column;align-items:center;gap:6px;border:1px solid #e5ebe1;border-radius:12px;background:#fbfcfa;padding:12px 8px;cursor:pointer;color:#344638;min-width:0}
+.product-tile:hover,.product-tile.selected{border-color:#8eb47b;background:#f0f6eb;box-shadow:0 0 0 2px #e7f0e1}
+.product-picture{height:47px;width:54px;border-radius:12px;background:#eef4e9;display:grid;place-items:center;font-size:27px}
+.product-tile b{font-size:12px;max-width:100%;overflow-wrap:anywhere;text-align:center}
+.product-tile small{font-size:10px;color:#7c887c}
+.owner-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;align-items:end}
+.owner-form label{display:grid;gap:7px;font-size:12px;font-weight:700;color:#435347}
+.owner-form input,.owner-form select,.chat-form input{width:100%;min-height:45px;border:1px solid #dfe6dc;background:#fbfcfa;border-radius:9px;padding:11px 12px;color:#26352a;font:inherit;font-size:14px;outline:none}
+.owner-form input:focus,.owner-form select:focus,.chat-form input:focus{border-color:#86a975;box-shadow:0 0 0 3px #eaf2e4}
+.owner-form .primary-button{min-height:45px;font-size:13px;white-space:nowrap}
+.one-column{grid-template-columns:1fr}
+.one-column .primary-button{width:100%}
+.alert-panel{background:#fffefa}
+.alert-list{display:grid;gap:9px}
+.alert-row{display:flex;align-items:center;gap:12px;padding:11px;border:1px solid #f0e6d7;background:#fffaf2;border-radius:11px}
+.alert-picture{width:40px;height:40px;border-radius:10px;background:#fff0d8;display:grid;place-items:center;font-size:22px;flex-shrink:0}
+.alert-row>div{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+.alert-row>div b{font-size:13px;color:#354638}
+.alert-row>div small{font-size:11px;color:#8a9188}
+.alert-row .advice-tag{margin:0;white-space:nowrap}
+.recent-sales{border-top:1px solid #edf0eb;margin-top:22px;padding-top:15px}
+.recent-sales h3{font:700 13px Manrope,sans-serif;margin:0 0 10px;color:#344638}
+.recent-row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid #f0f2ee;font-size:11px;color:#59645a}
+.recent-row b{color:#315b36}.recent-row small{color:#929b92}
+.forecast-summary{margin-top:18px;padding:15px;border-radius:12px;background:#f2f7ed;border:1px solid #e2ecd9}
+.forecast-summary h3{font:700 15px Manrope,sans-serif;color:#34543a;margin:6px 0}
+.forecast-summary .order-number{margin:5px 0}
+.forecast-summary .order-number b{font-size:42px}
+.forecast-summary p{font-size:11px;color:#657366;margin:8px 0}
+.forecast-summary>small{display:block;font-size:10px;color:#899489;line-height:1.5;margin-top:9px}
+.chat-panel{margin-top:16px}
+.chat-messages{display:flex;flex-direction:column;gap:9px;max-height:250px;overflow:auto;padding:4px 0 12px}
+.chat-bubble{max-width:85%;padding:11px 13px;border-radius:12px;font-size:12px;line-height:1.55}
+.helper-bubble{background:#f0f5ec;color:#455747;align-self:flex-start;border-bottom-left-radius:3px}
+.user-bubble{background:#294b34;color:#fff;align-self:flex-end;border-bottom-right-radius:3px}
+.chat-form{display:flex;gap:9px}
+.chat-form input{flex:1;min-width:0}
+.chat-form .primary-button{margin:0;padding:10px 18px}
+.owner-friendly .notice{font-size:12px}
+@media(max-width:1100px){.owner-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){
+ .header-actions{width:100%;justify-content:flex-start}
+ .friendly-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .friendly-metrics .metric-card:last-child{grid-column:1/-1}
+ .owner-form{grid-template-columns:1fr}
+ .product-strip{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .alert-row{gap:8px}
+ .alert-row .advice-tag{font-size:9px;padding:5px 7px}
+ .recent-row{grid-template-columns:1fr auto}
+ .recent-row small{grid-column:1/-1}
+ .chat-form{flex-direction:column}
+ .chat-form .primary-button{width:100%}
+ .chat-bubble{max-width:95%}
+}
