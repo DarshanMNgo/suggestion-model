@@ -153,7 +153,7 @@ export default function App() {
       const res = await fetch(`${API_BASE}/assistant`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({
         question:q, product, suggested_order_quantity:forecast?.suggested_order_quantity || 0,
         expected_total_demand:forecast?.expected_total_demand || 0, current_stock:Number(stock),
-        lead_time_demand:forecast?.lead_time_demand || 0, safety_stock:Number(safety)
+        lead_time_demand:forecast?.lead_time_demand || 0, safety_stock:Number(safety), language:lang
       })});
       const data = await res.json(); if (!res.ok) throw new Error(data.detail || "Helper is unavailable.");
       setChat(items => [...items, {from:"helper", text:data.answer}]);
