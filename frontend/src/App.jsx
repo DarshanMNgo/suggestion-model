@@ -2,20 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
-function Icon({ children }) {
-  return <span className="icon" aria-hidden="true">{children}</span>;
-}
-
-function MetricCard({ label, value, detail, icon }) {
-  return (
-    <article className="metric-card">
-      <div className="metric-top"><span>{label}</span><Icon>{icon}</Icon></div>
-      <strong>{value}</strong>
-      <small>{detail}</small>
-    </article>
-  );
-}
-
 function App() {
   const [products, setProducts] = useState([]);
   const [product, setProduct] = useState("");
@@ -36,10 +22,10 @@ function App() {
           fetch(`${API_BASE}/health`),
           fetch(`${API_BASE}/products`)
         ]);
-        if (!healthResponse.ok || !productsResponse.ok) throw new Error("Could not connect to the model API.");
+        if (!healthResponse.ok || !productsResponse.ok) throw new Error("We could not connect to the store forecast. Please check that the app server is running.");
         const health = await healthResponse.json();
         const productData = await productsResponse.json();
-        if (!health.model_ready) throw new Error("The model is not trained yet. Run the training command first.");
+        if (!health.model_ready) throw new Error("The forecast is not ready yet. Please ask your app administrator to prepare it.");
         if (!active) return;
         setApiReady(true);
         setProducts(productData.products || []);
@@ -47,7 +33,7 @@ function App() {
       } catch (err) {
         if (!active) return;
         setApiReady(false);
-        setError(err.message || "Could not connect to the API.");
+        setError(err.message || "Could not load your store information.");
       }
     }
     loadDashboard();
@@ -69,10 +55,10 @@ function App() {
       });
       const response = await fetch(`${API_BASE}/forecast?${params.toString()}`);
       const data = await response.json();
-      if (!response.ok) throw new Error(data.detail || "Forecast request failed.");
+      if (!response.ok) throw new Error(data.detail || "We couldn't prepare this estimate. Please try again.");
       setForecast(data);
     } catch (err) {
-      setError(err.message || "Unable to load forecast.");
+      setError(err.message || "Unable to prepare the estimate.");
     } finally {
       setLoading(false);
     }
@@ -80,7 +66,7 @@ function App() {
 
   useEffect(() => {
     if (apiReady && product) getForecast();
-    // Load a forecast when the API or selected product becomes ready/changes.
+    // Refresh the estimate when the app connects or the selected item changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiReady, product]);
 
@@ -89,94 +75,95 @@ function App() {
     [forecast]
   );
 
-  const recommendation = forecast?.suggested_order_quantity > 0
-    ? `Consider ordering ${forecast.suggested_order_quantity} units of ${forecast.product}.`
-    : `Your current stock appears sufficient for the selected supplier lead time and safety stock settings.`;
+  const orderQuantity = forecast?.suggested_order_quantity || 0;
 
   return (
-    <div className="app-shell">
+    <div className="app-shell owner-friendly">
       <aside className="sidebar">
-        <div className="brand"><div className="brand-mark">K</div><div><b>KiranaWise</b><small>STORE INTELLIGENCE</small></div></div>
-        <div className="side-label">WORKSPACE</div>
-        <a className="nav-item active" href="#overview"><Icon>▦</Icon> Overview</a>
-        <a className="nav-item" href="#forecast"><Icon>↗</Icon> Demand forecast</a>
-        <a className="nav-item" href="#inventory"><Icon>▤</Icon> Stock planning</a>
+        <div className="brand"><div className="brand-mark">K</div><div><b>KiranaWise</b><small>YOUR STORE HELPER</small></div></div>
+        <div className="side-label">MENU</div>
+        <a className="nav-item active" href="#home">⌂ &nbsp; My shop</a>
+        <a className="nav-item" href="#order">▣ &nbsp; Buying advice</a>
         <div className="sidebar-bottom">
-          <div className="help-card"><span>Need a hand?</span><p>Your forecast is an estimate. Check stock and expiry before ordering.</p></div>
-          <div className="store-profile"><div className="avatar">KS</div><div><b>My Store</b><small>Owner dashboard</small></div></div>
+          <div className="help-card"><span>Small tip</span><p>Enter the stock you can count on your shelf. The app will help estimate what you may need.</p></div>
+          <div className="store-profile"><div className="avatar">店</div><div><b>My Shop</b><small>Shop owner</small></div></div>
         </div>
       </aside>
 
-      <main className="main-content" id="overview">
+      <main className="main-content" id="home">
         <header className="topbar">
-          <div><span className="eyebrow">STORE OVERVIEW</span><h1>Good day, Store Owner <span>✦</span></h1><p>Here is your demand planning snapshot.</p></div>
-          <div className={`connection-pill ${apiReady ? "online" : "offline"}`}><i />{apiReady ? "Model connected" : "Connecting to model"}</div>
+          <div>
+            <span className="eyebrow">YOUR DAILY SHOP UPDATE</span>
+            <h1>Welcome to your shop 👋</h1>
+            <p>Let’s see what you may need to buy next.</p>
+          </div>
+          <div className={`connection-pill ${apiReady ? "online" : "offline"}`}><i />{apiReady ? "Ready to help" : "Connecting…"}</div>
         </header>
 
-        {!apiReady && <div className="notice error"><b>Can't reach the forecasting API.</b><span>Keep the backend terminal running at {API_BASE}. Then refresh this page.</span></div>}
-        {error && <div className="notice error"><b>Something needs attention</b><span>{error}</span></div>}
+        {!apiReady && <div className="notice error"><b>Your shop helper is not connected yet.</b><span>Please keep the app's server running, then refresh this page.</span></div>}
+        {error && <div className="notice error"><b>One small issue</b><span>{error}</span></div>}
 
-        <section className="metric-grid">
-          <MetricCard label="Products tracked" value={products.length || "—"} detail="Available in your sales data" icon="▦" />
-          <MetricCard label="Forecast period" value={`${days} days`} detail="Expected product demand" icon="◷" />
-          <MetricCard label="Selected product" value={product || "—"} detail="Change product below" icon="⌕" />
-          <MetricCard label="Forecast model" value={forecast?.model || "—"} detail="Selected after model evaluation" icon="✧" />
+        <section className="friendly-intro">
+          <div><span className="eyebrow">QUICK AND EASY</span><h2>Check what to restock</h2><p>Choose an item, tell us how much is left, and get a simple buying suggestion.</p></div>
+          <div className="intro-emoji" aria-hidden="true">🛒</div>
         </section>
 
-        <section className="content-grid" id="forecast">
+        <section className="content-grid friendly-grid" id="order">
           <article className="panel forecast-panel">
-            <div className="panel-heading"><div><span className="eyebrow">DEMAND FORECAST</span><h2>Plan your next order</h2><p>Choose a product and enter the stock you currently have.</p></div><span className="panel-icon">↗</span></div>
-            <form className="controls" onSubmit={getForecast}>
-              <label>Product
+            <div className="panel-heading"><div><span className="eyebrow">STEP 1</span><h2>Tell us about an item</h2><p>Just enter what you know. You can change these numbers anytime.</p></div><span className="panel-icon">🧺</span></div>
+            <form className="controls friendly-controls" onSubmit={getForecast}>
+              <label>Which item do you want to check?
                 <select value={product} onChange={(e) => setProduct(e.target.value)}>
+                  {products.length === 0 && <option value="">No items available</option>}
                   {products.map((item) => <option key={item} value={item}>{item}</option>)}
                 </select>
               </label>
-              <div className="input-row">
-                <label>Current stock <span>(units)</span><input type="number" min="0" value={stock} onChange={(e) => setStock(Math.max(0, Number(e.target.value)))} /></label>
-                <label>Supplier lead time <span>(days)</span><input type="number" min="1" max="30" value={leadTime} onChange={(e) => setLeadTime(Math.max(1, Number(e.target.value)))} /></label>
-                <label>Safety stock <span>(units)</span><input type="number" min="0" value={safety} onChange={(e) => setSafety(Math.max(0, Number(e.target.value)))} /></label>
-              </div>
-              <label>Forecast period
-                <div className="period-options">
-                  {[7, 14, 30].map((n) => <button type="button" key={n} className={days === n ? "period active" : "period"} onClick={() => setDays(n)}>{n} days</button>)}
-                </div>
+              <label>How many are left in your shop?
+                <input type="number" min="0" value={stock} onChange={(e) => setStock(Math.max(0, Number(e.target.value)))} />
+                <small className="field-help">Count the units or packets you can sell now.</small>
               </label>
-              <button className="primary-button" type="submit" disabled={!apiReady || loading}>{loading ? "Calculating..." : "Generate demand forecast"} <span>→</span></button>
-            </form>
-            {forecast && <div className="forecast-result">
-              <div className="result-heading"><div><span className="eyebrow">EXPECTED DEMAND</span><h3>{forecast.product}</h3></div><div className="total-demand"><b>{forecast.expected_total_demand}</b><small>units in {forecast.forecast_days} days</small></div></div>
-              <div className="bar-chart" role="img" aria-label="Expected daily product demand">
-                {forecast.daily_forecast.map((item) => <div className="bar-column" key={item.date}><b>{item.expected_units}</b><div className="bar-track"><div className="bar-fill" style={{ height: `${Math.max(5, item.expected_units / maxDemand * 100)}%` }} /></div><small>{new Date(item.date + "T00:00:00").toLocaleDateString("en-IN", { weekday: "short" })}</small></div>)}
+              <label>How many days does your supplier take to deliver?
+                <input type="number" min="1" max="30" value={leadTime} onChange={(e) => setLeadTime(Math.max(1, Number(e.target.value)))} />
+                <small className="field-help">For example: enter 2 if delivery takes two days.</small>
+              </label>
+              <label>How many extra units do you want to keep?
+                <input type="number" min="0" value={safety} onChange={(e) => setSafety(Math.max(0, Number(e.target.value)))} />
+                <small className="field-help">This is your backup stock in case more customers buy.</small>
+              </label>
+              <div className="period-label">How far ahead should we check?</div>
+              <div className="period-options">
+                {[7, 14, 30].map((n) => <button type="button" key={n} className={days === n ? "period active" : "period"} onClick={() => setDays(n)}>{n} days</button>)}
               </div>
-              <div className="chart-caption">Estimated units sold per day · Forecast based on the trained sample model</div>
-            </div>}
+              <button className="primary-button friendly-button" type="submit" disabled={!apiReady || loading || !product}>{loading ? "Checking your item…" : "Show my buying suggestion"} <span>→</span></button>
+            </form>
           </article>
 
-          <article className="panel order-panel" id="inventory">
-            <div className="panel-heading"><div><span className="eyebrow">STOCK PLANNING</span><h2>Reorder advice</h2><p>Use this as a planning guide.</p></div><span className="panel-icon">▤</span></div>
+          <article className="panel order-panel friendly-order">
+            <div className="panel-heading"><div><span className="eyebrow">STEP 2</span><h2>Your buying suggestion</h2><p>A simple estimate to help plan your next purchase.</p></div><span className="panel-icon">📦</span></div>
             {forecast ? <>
-              <div className="order-number"><b>{forecast.suggested_order_quantity}</b><span>units</span></div>
-              <div className={forecast.suggested_order_quantity > 0 ? "advice-tag attention" : "advice-tag good"}>{forecast.suggested_order_quantity > 0 ? "Reorder suggested" : "Stock looks sufficient"}</div>
-              <p className="recommendation">{recommendation}</p>
+              <div className="suggestion-copy">{orderQuantity > 0 ? "You may need to order:" : "Good news! Based on these details, you may not need to order more right now."}</div>
+              <div className="order-number"><b>{orderQuantity}</b><span>units</span></div>
+              <div className={orderQuantity > 0 ? "advice-tag attention" : "advice-tag good"}>{orderQuantity > 0 ? "Consider restocking" : "Stock may be enough for now"}</div>
+              <p className="recommendation">{orderQuantity > 0 ? `For ${forecast.product}, consider ordering around ${orderQuantity} units.` : `Your current ${forecast.product} stock may be enough for the supplier waiting period and extra stock you want to keep.`}</p>
               <div className="calculation">
-                <div><span>Demand during lead time</span><b>{forecast.lead_time_demand} units</b></div>
-                <div><span>Safety stock</span><b>{forecast.safety_stock} units</b></div>
-                <div><span>Current stock</span><b>{forecast.current_stock} units</b></div>
-                <div className="calculation-total"><span>Suggested order</span><b>{forecast.suggested_order_quantity} units</b></div>
+                <div><span>Expected sales before delivery</span><b>{forecast.lead_time_demand} units</b></div>
+                <div><span>Your extra backup stock</span><b>{forecast.safety_stock} units</b></div>
+                <div><span>Already in your shop</span><b>{forecast.current_stock} units</b></div>
               </div>
-            </> : <div className="empty-state">Generate a forecast to see the suggested order quantity.</div>}
+              <p className="simple-note">This is a suggestion, not an order. Please check your shelf and expiry dates before buying.</p>
+            </> : <div className="empty-state">Your buying suggestion will appear here. First choose an item and enter the stock you have.</div>}
           </article>
         </section>
 
-        {forecast && <section className="panel daily-panel">
-          <div className="panel-heading"><div><span className="eyebrow">DAY-BY-DAY VIEW</span><h2>Expected sales</h2></div><span className="muted">Forecast for {forecast.product}</span></div>
-          <div className="table-wrap"><table><thead><tr><th>Date</th><th>Day</th><th>Expected units</th></tr></thead><tbody>
-            {forecast.daily_forecast.map((item) => <tr key={item.date}><td>{new Date(item.date + "T00:00:00").toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</td><td>{new Date(item.date + "T00:00:00").toLocaleDateString("en-IN", { weekday: "long" })}</td><td><b>{item.expected_units}</b></td></tr>)}
-          </tbody></table></div>
+        {forecast && <section className="panel daily-panel friendly-daily">
+          <div className="panel-heading"><div><span className="eyebrow">SALES ESTIMATE</span><h2>How much may sell each day?</h2><p>Estimated sales for {forecast.product} over the next {forecast.forecast_days} days.</p></div></div>
+          <div className="bar-chart" role="img" aria-label="Estimated daily sales">
+            {forecast.daily_forecast.map((item) => <div className="bar-column" key={item.date}><b>{item.expected_units}</b><div className="bar-track"><div className="bar-fill" style={{ height: `${Math.max(5, item.expected_units / maxDemand * 100)}%` }} /></div><small>{new Date(item.date + "T00:00:00").toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</small></div>)}
+          </div>
+          <div className="chart-caption">Total expected sales: <b>{forecast.expected_total_demand} units</b>. These are estimates from the sales records available in the app.</div>
         </section>}
 
-        <footer className="footer-note"><span>✦</span> Predictions are estimates based on available sales history. Verify stock, expiry dates and supplier conditions before placing an order.</footer>
+        <footer className="footer-note"><span>ℹ</span> The app gives an estimate using available sales records. Actual sales can change due to festivals, weather, offers and customer demand. Use your shop experience before placing an order.</footer>
       </main>
     </div>
   );
