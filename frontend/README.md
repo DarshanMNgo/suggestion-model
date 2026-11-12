@@ -1,16 +1,10 @@
-# KiranaWise React dashboard
+# KiranaWise frontend
 
-This is the shop-owner dashboard for the demand forecasting API.
+React + Vite app for the shop owner. Phone first (bottom tab bar), sidebar on desktop.
 
-## Run locally
+## Run
 
-Keep the FastAPI backend running in a separate terminal from the repository root:
-
-```powershell
-uvicorn app.api:app --reload
-```
-
-Open a second terminal:
+Keep the backend running from the repository root (`uvicorn app.api:app --reload`), then:
 
 ```powershell
 cd frontend
@@ -18,17 +12,15 @@ npm install
 npm run dev
 ```
 
-Open the local URL printed by Vite, usually http://localhost:5173.
+Open http://localhost:5173. The app talks to `http://127.0.0.1:8000`; change it with `VITE_API_URL`.
 
-The dashboard calls the API at http://127.0.0.1:8000. The backend includes CORS permission for the Vite local development URLs.
+## Where things are
 
-## Dashboard features
-
-- API connection status
-- Product selector
-- Current stock, supplier lead time, and safety stock inputs
-- 7, 14, or 30-day demand forecast
-- Daily demand chart and table
-- Suggested reorder quantity and calculation
-
-The current backend uses synthetic demonstration sales. Replace these with real store sales and inventory records before relying on the suggested order quantities.
+| File | Purpose |
+|---|---|
+| `src/App.jsx` | Shell, navigation, language, toasts |
+| `src/screens/` | Home, Sell, Stock, Buy, Khata, Settings |
+| `src/Assistant.jsx` | Floating voice/chat assistant (browser speech recognition + speech output) |
+| `src/i18n.js` | All text in English, Hindi and Kannada. Add a language here |
+| `src/api.js` | Fetch helper and item emoji |
+| `src/ui.jsx` | Shared pieces: page, bottom sheet, stepper, badge |

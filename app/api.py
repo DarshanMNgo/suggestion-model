@@ -1,163 +1,366 @@
-"""FastAPI backend for KiranaWise forecasts, stock and daily sales records."""
-from datetime import date, timedelta
-from pathlib import Path
+"""KiranaWise API: a thin web layer over the shop logic.
+
+Run:  uvicorn app.api:app --reload
+Docs: http://127.0.0.1:8000/docs
+"""
+from __future__ import annotations
+
+import os
 import sqlite3
+from contextlib import asynccontextmanager
+from datetime import date, timedelta
+from typing import Literal
 
-import joblib
-import pandas as pd
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-ROOT = Path(__file__).resolve().parents[1]
-MODEL_PATH = ROOT / "models" / "demand_model.joblib"
-DB_PATH = ROOT / "data" / "kirana_store.db"
+from . import assistant, catalog, db, khata, orders, planner
 
-app = FastAPI(title="KiranaWise Store API", version="2.0.0")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
-    allow_credentials=True, allow_methods=["*"], allow_headers=["*"],
-)
 
-def connect_db():
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    db.init_db()
+    yield
 
-def init_db():
-    with connect_db() as conn:
-        conn.execute("""CREATE TABLE IF NOT EXISTS inventory (
-            product TEXT PRIMARY KEY, stock INTEGER NOT NULL DEFAULT 0,
-            low_stock_threshold INTEGER NOT NULL DEFAULT 5, updated_at TEXT NOT NULL
-        )""")
-        conn.execute("""CREATE TABLE IF NOT EXISTS sales (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, product TEXT NOT NULL,
-            quantity INTEGER NOT NULL, sale_date TEXT NOT NULL, created_at TEXT NOT NULL
-        )""")
 
-@app.on_event("startup")
-def startup():
-    init_db()
+app = FastAPI(title="KiranaWise Store API", version="3.0.0", lifespan=lifespan)
 
-def load_bundle():
-    if not MODEL_PATH.exists():
-        raise HTTPException(status_code=503, detail="Forecast model is not ready. Ask the app administrator to train it.")
-    return joblib.load(MODEL_PATH)
+_origins = os.environ.get("KIRANA_CORS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
+app.add_middleware(CORSMiddleware, allow_origins=[o.strip() for o in _origins if o.strip()],
+                   allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+
+def get_conn():
+    """One database connection per request; saved on success, undone on error."""
+    conn = db.connect()
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+Conn = Depends(get_conn)
+
+
+def _bad_request(exc: Exception) -> HTTPException:
+    code = 404 if isinstance(exc, LookupError) else 400
+    return HTTPException(status_code=code, detail=str(exc))
+
+
+# ---------------------------------------------------------------- basics
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "model_ready": MODEL_PATH.exists()}
+    return {"status": "ok", "model_ready": planner.MODEL_PATH.exists()}
 
-@app.get("/products")
-def products():
-    bundle = load_bundle()
-    history = pd.DataFrame(bundle["history"])
-    return {"products": sorted(history["product"].unique().tolist())}
+
+@app.get("/summary")
+def summary(conn: sqlite3.Connection = Conn):
+    return planner.daily_summary(conn)
+
+
+# ---------------------------------------------------------------- stock
+
+class ItemIn(BaseModel):
+    product: str = Field(min_length=1, max_length=120)
+    stock: int | None = Field(default=None, ge=0)
+    low_stock_threshold: int | None = Field(default=None, ge=0)
+    unit: str | None = Field(default=None, max_length=20)
+    cost_price: float | None = Field(default=None, ge=0)
+    sell_price: float | None = Field(default=None, ge=0)
+    supplier: str | None = Field(default=None, max_length=120)
+    shelf_life_days: int | None = Field(default=None, ge=0)
+    aliases: str | None = Field(default=None, max_length=300)
+    category: str | None = Field(default=None, max_length=60)
+
 
 @app.get("/inventory")
-def get_inventory():
-    bundle = load_bundle()
-    history = pd.DataFrame(bundle["history"])
-    names = sorted(history["product"].unique().tolist())
-    with connect_db() as conn:
-        for name in names:
-            conn.execute(
-                "INSERT OR IGNORE INTO inventory(product, stock, low_stock_threshold, updated_at) VALUES (?, 0, 5, ?)",
-                (name, date.today().isoformat()),
-            )
-        rows = conn.execute("SELECT product, stock, low_stock_threshold, updated_at FROM inventory ORDER BY product").fetchall()
-    return {"items": [dict(row) for row in rows]}
+def get_inventory(conn: sqlite3.Connection = Conn):
+    return {"items": catalog.list_inventory(conn)}
 
-class InventoryUpdate(BaseModel):
-    product: str = Field(min_length=1, max_length=120)
-    stock: int = Field(ge=0)
-    low_stock_threshold: int = Field(default=5, ge=0)
+
+@app.get("/products")
+def products(conn: sqlite3.Connection = Conn):
+    return {"products": [i["product"] for i in catalog.list_inventory(conn)]}
+
 
 @app.post("/inventory")
-def update_inventory(payload: InventoryUpdate):
-    with connect_db() as conn:
-        conn.execute("""INSERT INTO inventory(product, stock, low_stock_threshold, updated_at)
-            VALUES (?, ?, ?, ?) ON CONFLICT(product) DO UPDATE SET
-            stock=excluded.stock, low_stock_threshold=excluded.low_stock_threshold,
-            updated_at=excluded.updated_at""",
-            (payload.product, payload.stock, payload.low_stock_threshold, date.today().isoformat()))
-    return {"saved": True, "product": payload.product, "stock": payload.stock, "low_stock_threshold": payload.low_stock_threshold}
+def save_item(payload: ItemIn, conn: sqlite3.Connection = Conn):
+    """Add a new item or change an existing one. Only the fields you send are changed."""
+    try:
+        item = catalog.upsert_product(conn, payload.product, **payload.model_dump(exclude={"product"}))
+    except ValueError as exc:
+        raise _bad_request(exc)
+    return {"saved": True, **item}
 
-class SaleEntry(BaseModel):
+
+class ReceiveIn(BaseModel):
+    product: str = Field(min_length=1, max_length=120)
+    quantity: int = Field(gt=0)
+    expiry_date: date | None = None
+    cost_price: float | None = Field(default=None, ge=0)
+
+
+@app.post("/inventory/receive")
+def receive(payload: ReceiveIn, conn: sqlite3.Connection = Conn):
+    """New goods arrived: add to stock and remember the expiry date."""
+    try:
+        return catalog.receive_stock(conn, payload.product, payload.quantity, payload.expiry_date, payload.cost_price)
+    except ValueError as exc:
+        raise _bad_request(exc)
+
+
+@app.delete("/inventory/{product}")
+def delete_item(product: str, conn: sqlite3.Connection = Conn):
+    row = catalog.get_product(conn, product)
+    if not row:
+        raise HTTPException(404, "Item not found.")
+    conn.execute("DELETE FROM batches WHERE product = ?", (row["product"],))
+    conn.execute("DELETE FROM inventory WHERE product = ?", (row["product"],))
+    return {"deleted": row["product"]}
+
+
+# ---------------------------------------------------------------- sales
+
+class SaleIn(BaseModel):
     product: str = Field(min_length=1, max_length=120)
     quantity: int = Field(gt=0)
     sale_date: date = Field(default_factory=date.today)
+    price: float | None = Field(default=None, ge=0)
+    payment: Literal["cash", "upi", "credit"] = "cash"
+    customer_id: int | None = None
+
 
 @app.post("/sales")
-def add_sale(payload: SaleEntry):
-    with connect_db() as conn:
-        cur = conn.execute(
-            "INSERT INTO sales(product, quantity, sale_date, created_at) VALUES (?, ?, ?, datetime('now'))",
-            (payload.product, payload.quantity, payload.sale_date.isoformat()),
-        )
-        conn.execute("""INSERT INTO inventory(product, stock, low_stock_threshold, updated_at)
-            VALUES (?, 0, 5, ?) ON CONFLICT(product) DO NOTHING""",
-            (payload.product, date.today().isoformat()))
-        conn.execute("""UPDATE inventory SET stock=MAX(0, stock-?), updated_at=? WHERE product=?""",
-            (payload.quantity, date.today().isoformat(), payload.product))
-        sale_id = cur.lastrowid
-    return {"saved": True, "sale_id": sale_id, "product": payload.product,
-            "quantity": payload.quantity, "sale_date": payload.sale_date.isoformat(),
-            "message": "Sale saved and stock reduced by the sold quantity."}
+def add_sale(payload: SaleIn, conn: sqlite3.Connection = Conn):
+    try:
+        result = catalog.record_sale(conn, payload.product, payload.quantity, payload.sale_date,
+                                     payload.price, payload.payment, payload.customer_id)
+    except ValueError as exc:
+        raise _bad_request(exc)
+    return {"saved": True, **result}
+
 
 @app.get("/sales")
-def get_sales(limit: int = Query(30, ge=1, le=200)):
-    with connect_db() as conn:
-        rows = conn.execute(
-            "SELECT id, product, quantity, sale_date FROM sales ORDER BY sale_date DESC, id DESC LIMIT ?", (limit,)
-        ).fetchall()
-    return {"sales": [dict(row) for row in rows]}
+def get_sales(limit: int = Query(30, ge=1, le=200), conn: sqlite3.Connection = Conn):
+    return {"sales": catalog.recent_sales(conn, limit)}
+
+
+# ---------------------------------------------------------------- advice
+
+@app.get("/suggestions")
+def suggestions(budget: float | None = Query(None, ge=0), conn: sqlite3.Connection = Conn):
+    return planner.reorder_suggestions(conn, budget)
+
+
+@app.get("/expiry")
+def expiry(days: int = Query(planner.EXPIRY_SOON_DAYS, ge=1, le=120), conn: sqlite3.Connection = Conn):
+    return {"items": planner.expiry_report(conn, days)}
+
+
+@app.get("/dead-stock")
+def dead_stock(days: int = Query(planner.DEAD_STOCK_DAYS, ge=7, le=365), conn: sqlite3.Connection = Conn):
+    return {"items": planner.dead_stock(conn, days)}
+
 
 @app.get("/forecast")
-def forecast(
-    product: str,
-    days: int = Query(7, ge=1, le=30),
-    current_stock: int = Query(0, ge=0),
-    lead_time_days: int = Query(2, ge=1, le=30),
-    safety_stock: int = Query(0, ge=0),
-    promotion: int = Query(0, ge=0, le=1),
-):
-    bundle = load_bundle()
-    history = pd.DataFrame(bundle["history"])
-    history["date"] = pd.to_datetime(history["date"])
-    product_history = history[history["product"].str.casefold() == product.casefold()].sort_values("date")
-    if product_history.empty:
-        raise HTTPException(status_code=404, detail=f"Product '{product}' not found.")
-    model, features = bundle["model"], bundle["features"]
-    sales = product_history["units_sold"].astype(float).tolist()
-    last_date = product_history["date"].max()
-    predictions = []
-    for step in range(1, days + 1):
-        target_date = last_date + timedelta(days=step)
-        row = {
-            "day_of_week": target_date.dayofweek, "day_of_month": target_date.day,
-            "month": target_date.month, "is_weekend": int(target_date.dayofweek >= 5),
-            "promotion": promotion, "lag_1": sales[-1],
-            "lag_7": sales[-7] if len(sales) >= 7 else sales[-1],
-            "rolling_mean_7": sum(sales[-7:]) / min(7, len(sales)),
-            "rolling_mean_28": sum(sales[-28:]) / min(28, len(sales)),
-        }
-        estimate = max(0.0, float(model.predict(pd.DataFrame([row], columns=features))[0]))
-        predictions.append({"date": target_date.date().isoformat(), "expected_units": round(estimate, 1)})
-        sales.append(estimate)
-    total = sum(item["expected_units"] for item in predictions)
-    lead_days = min(lead_time_days, days)
-    lead_demand = sum(item["expected_units"] for item in predictions[:lead_days])
-    suggested = max(0, int(round(lead_demand + safety_stock - current_stock)))
-    return {
-        "product": product_history["product"].iloc[-1], "forecast_days": days,
-        "daily_forecast": predictions, "expected_total_demand": round(total, 1),
-        "current_stock": current_stock, "lead_time_days": lead_time_days,
-        "safety_stock": safety_stock, "lead_time_demand": round(lead_demand, 1),
-        "reorder_point": round(lead_demand + safety_stock, 1),
-        "suggested_order_quantity": suggested, "model": bundle["model_name"],
-        "evaluation": bundle["metrics"],
-        "note": "Estimates use the trained sample sales history. Manually entered sales are saved separately and do not retrain this model automatically."
-    }
+def forecast(product: str, days: int = Query(7, ge=1, le=30),
+             lead_time_days: int = Query(2, ge=1, le=30), safety_stock: int = Query(0, ge=0),
+             current_stock: int | None = Query(None, ge=0), conn: sqlite3.Connection = Conn):
+    """Simple forecast for one item, from the owner's own sales (or sample history if there are none)."""
+    row = catalog.get_product(conn, product)
+    if not row:
+        raise HTTPException(404, f"Item '{product}' not found.")
+    per_day, source = planner.daily_demand(conn, row["product"])
+    boost, festival = planner.festival_boost(row["product"])
+    per_day *= boost
+    stock = row["stock"] if current_stock is None else current_stock
+    today = db.today()
+    daily = [{"date": (today + timedelta(days=i)).isoformat(), "expected_units": round(per_day, 1)}
+             for i in range(1, days + 1)]
+    lead_demand = per_day * min(lead_time_days, days)
+    return {"product": row["product"], "forecast_days": days, "daily_forecast": daily,
+            "expected_total_demand": round(per_day * days, 1), "current_stock": stock,
+            "lead_time_days": lead_time_days, "safety_stock": safety_stock,
+            "lead_time_demand": round(lead_demand, 1), "reorder_point": round(lead_demand + safety_stock, 1),
+            "suggested_order_quantity": max(0, round(lead_demand + safety_stock - stock)),
+            "festival": festival, "demand_source": source}
+
+
+# ---------------------------------------------------------------- orders
+
+@app.get("/orders")
+def list_orders(status: str | None = None, conn: sqlite3.Connection = Conn):
+    return {"orders": orders.list_orders(conn, status)}
+
+
+class DraftIn(BaseModel):
+    products: list[str] | None = None
+
+
+@app.post("/orders/draft")
+def draft_orders(payload: DraftIn | None = None, conn: sqlite3.Connection = Conn):
+    created = orders.create_draft_orders(conn, payload.products if payload else None)
+    return {"orders": created, "count": len(created)}
+
+
+class ItemQty(BaseModel):
+    quantity: int = Field(ge=0)
+
+
+@app.patch("/orders/{order_id}/items/{item_id}")
+def change_item(order_id: int, item_id: int, payload: ItemQty, conn: sqlite3.Connection = Conn):
+    try:
+        return orders.update_item(conn, order_id, item_id, payload.quantity)
+    except (ValueError, LookupError) as exc:
+        raise _bad_request(exc)
+
+
+@app.post("/orders/{order_id}/approve")
+def approve_order(order_id: int, conn: sqlite3.Connection = Conn):
+    try:
+        return orders.approve(conn, order_id)
+    except (ValueError, LookupError) as exc:
+        raise _bad_request(exc)
+
+
+@app.post("/orders/{order_id}/reject")
+def reject_order(order_id: int, conn: sqlite3.Connection = Conn):
+    try:
+        return orders.reject(conn, order_id)
+    except (ValueError, LookupError) as exc:
+        raise _bad_request(exc)
+
+
+class ReceiveOrderIn(BaseModel):
+    expiry_dates: dict[str, date] | None = None
+
+
+@app.post("/orders/{order_id}/receive")
+def receive_order(order_id: int, payload: ReceiveOrderIn | None = None, conn: sqlite3.Connection = Conn):
+    dates = {k: v.isoformat() for k, v in (payload.expiry_dates or {}).items()} if payload else None
+    try:
+        return orders.receive(conn, order_id, dates)
+    except (ValueError, LookupError) as exc:
+        raise _bad_request(exc)
+
+
+class NeighbourIn(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+    phone: str = Field(default="", max_length=20)
+
+
+@app.get("/joint-order")
+def joint_order(conn: sqlite3.Connection = Conn):
+    return orders.joint_order_message(conn)
+
+
+@app.post("/neighbours")
+def add_neighbour(payload: NeighbourIn, conn: sqlite3.Connection = Conn):
+    cur = conn.execute("INSERT INTO neighbours(name, phone) VALUES (?, ?)", (payload.name.strip(), payload.phone.strip()))
+    return {"id": cur.lastrowid, "name": payload.name.strip(), "phone": payload.phone.strip()}
+
+
+@app.delete("/neighbours/{neighbour_id}")
+def delete_neighbour(neighbour_id: int, conn: sqlite3.Connection = Conn):
+    conn.execute("DELETE FROM neighbours WHERE id = ?", (neighbour_id,))
+    return {"deleted": neighbour_id}
+
+
+# ---------------------------------------------------------------- khata
+
+class CustomerIn(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+    phone: str = Field(default="", max_length=20)
+
+
+class EntryIn(BaseModel):
+    amount: float = Field(gt=0)
+    kind: Literal["credit", "payment"]
+    note: str = Field(default="", max_length=200)
+
+
+@app.get("/customers")
+def customers(conn: sqlite3.Connection = Conn):
+    return {"customers": khata.list_customers(conn), "total_pending": khata.total_outstanding(conn)}
+
+
+@app.post("/customers")
+def new_customer(payload: CustomerIn, conn: sqlite3.Connection = Conn):
+    try:
+        return khata.add_customer(conn, payload.name, payload.phone)
+    except ValueError as exc:
+        raise _bad_request(exc)
+
+
+@app.get("/customers/{customer_id}")
+def customer_detail(customer_id: int, conn: sqlite3.Connection = Conn):
+    person = khata.get_customer(conn, customer_id)
+    if not person:
+        raise HTTPException(404, "Customer not found.")
+    return {**person, "history": khata.history(conn, customer_id)}
+
+
+@app.post("/customers/{customer_id}/entries")
+def customer_entry(customer_id: int, payload: EntryIn, conn: sqlite3.Connection = Conn):
+    try:
+        return khata.add_entry(conn, customer_id, payload.amount, payload.kind, payload.note)
+    except ValueError as exc:
+        raise _bad_request(exc)
+
+
+# ---------------------------------------------------------------- settings
+
+class SettingsIn(BaseModel):
+    shop_name: str | None = Field(default=None, max_length=80)
+    weekly_budget: float | None = Field(default=None, ge=0)
+    cover_days: int | None = Field(default=None, ge=1, le=60)
+    lead_time_days: int | None = Field(default=None, ge=1, le=30)
+    language: Literal["en", "hi", "kn"] | None = None
+
+
+@app.get("/settings")
+def read_settings(conn: sqlite3.Connection = Conn):
+    return db.get_settings(conn)
+
+
+@app.put("/settings")
+def write_settings(payload: SettingsIn, conn: sqlite3.Connection = Conn):
+    return db.save_settings(conn, payload.model_dump(exclude_none=True))
+
+
+# ---------------------------------------------------------------- voice / chat assistant
+
+class AssistantIn(BaseModel):
+    text: str = Field(max_length=300)
+    lang: Literal["en", "hi", "kn"] = "en"
+
+
+class ConfirmIn(BaseModel):
+    action: dict
+    lang: Literal["en", "hi", "kn"] = "en"
+
+
+@app.post("/assistant")
+def assistant_message(payload: AssistantIn, conn: sqlite3.Connection = Conn):
+    """Understand a spoken or typed command. Reads answer at once; changes wait for /assistant/confirm."""
+    return assistant.interpret(conn, payload.text, payload.lang)
+
+
+@app.post("/assistant/confirm")
+def assistant_confirm(payload: ConfirmIn, conn: sqlite3.Connection = Conn):
+    return assistant.execute(conn, payload.action, payload.lang)
+
+
+# ---------------------------------------------------------------- demo data
+
+@app.post("/demo/seed")
+def demo_seed(reset: bool = False, conn: sqlite3.Connection = Conn):
+    """Fill the app with a realistic sample shop so judges and new users can try everything."""
+    from . import seed
+    return seed.seed_demo(conn, reset=reset)
