@@ -11,3 +11,7 @@ models/*.joblib
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
+
+# Local shop database (created on first run)
+data/*.db
+data/*.db-journal
