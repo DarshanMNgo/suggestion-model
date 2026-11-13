@@ -113,6 +113,20 @@ def seed_demo(conn: sqlite3.Connection, reset: bool = False) -> dict:
             "message": "Sample shop loaded."}
 
 
+def prepare_database() -> None:
+    """Create the tables, and on hosted demos load the sample shop if the shop is empty.
+
+    Hosted demos (Vercel, or KIRANA_AUTOSEED=1) start with an empty temporary database after every
+    restart, so without this the owner would open the app and see nothing.
+    """
+    import os
+    db.init_db()
+    if os.environ.get("VERCEL") or os.environ.get("KIRANA_AUTOSEED") == "1":
+        with db.connect() as conn:
+            if shop_is_empty(conn):
+                seed_demo(conn)
+
+
 if __name__ == "__main__":
     db.init_db()
     with db.connect() as connection:

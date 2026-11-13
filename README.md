@@ -83,9 +83,23 @@ API docs: http://127.0.0.1:8000/docs. To open the app from a phone on the same W
 The original machine-learning pipeline is kept. It trains on generated sample data and is used only as a fallback for demand when a shop has under a week of real sales.
 
 ```powershell
+pip install -r requirements-ml.txt
 python -m app.data_generator
 python -m app.train
 ```
+
+### Deploying (demo)
+
+**Backend on Vercel** (project root = repository root): `index.py` is the entry point Vercel looks for, and
+`requirements.txt` is kept small on purpose (the ML libraries are in `requirements-ml.txt`).
+Vercel's disk is temporary, so the shop database lives in `/tmp` and the **sample shop is loaded automatically**
+whenever it starts empty. Data you add in a hosted demo is therefore not permanent and may reset, and separate
+server instances do not share data. For a permanent single-owner deployment use a host with a disk
+(Render, Railway, Fly.io) and `uvicorn app.api:app --host 0.0.0.0 --port $PORT`; set `KIRANA_DB` to a path on its disk.
+
+**Frontend on Vercel** (second project, *Root Directory* = `frontend`): set the environment variable
+`VITE_API_URL` to the backend's URL (no trailing slash) *before* building. Backends on `*.vercel.app` already
+accept requests from any `*.vercel.app` frontend; for another domain set `KIRANA_CORS` on the backend to that address.
 
 ### Tests
 

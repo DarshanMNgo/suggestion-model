@@ -1,0 +1,7 @@
+frontend
+tests
+.venv
+node_modules
+data
+models
+*.md

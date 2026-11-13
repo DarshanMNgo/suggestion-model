@@ -337,3 +337,54 @@ def test_english_hindi_still_unaffected_by_kannada_matching(demo):
     assert assistant.interpret(demo, "sold 5 milk")["action"]["quantity"] == 5
     assert assistant.interpret(demo, "5 doodh becha", "hi")["action"]["product"] == "Milk"
     assert not assistant.is_yes("ಇಲ್ಲಿ") and assistant.is_no("ಇಲ್ಲ")
+
+
+# ------------------------------------------------------------------ hosting (Vercel)
+
+def test_database_goes_to_tmp_on_vercel(monkeypatch):
+    monkeypatch.delenv("KIRANA_DB", raising=False)
+    monkeypatch.setenv("VERCEL", "1")
+    assert str(db.db_path()) == "/tmp/kirana_store.db"
+    monkeypatch.setenv("KIRANA_DB", "/somewhere/else.db")  # an explicit setting still wins
+    assert str(db.db_path()) == "/somewhere/else.db"
+
+
+def test_hosted_demo_loads_sample_shop_once(tmp_path, monkeypatch):
+    monkeypatch.setenv("KIRANA_DB", str(tmp_path / "hosted.db"))
+    monkeypatch.setenv("VERCEL", "1")
+    seed.prepare_database()
+    conn = db.connect()
+    items = len(catalog.list_inventory(conn))
+    assert items == len(seed.DEMO_ITEMS)
+    conn.execute("DELETE FROM sales"); conn.commit(); conn.close()
+    seed.prepare_database()   # a second start must not duplicate or reset anything
+    conn = db.connect()
+    assert len(catalog.list_inventory(conn)) == items
+    conn.close()
+
+
+def test_local_run_does_not_autoload_demo(tmp_path, monkeypatch):
+    monkeypatch.setenv("KIRANA_DB", str(tmp_path / "local.db"))
+    monkeypatch.delenv("VERCEL", raising=False)
+    monkeypatch.delenv("KIRANA_AUTOSEED", raising=False)
+    seed.prepare_database()
+    conn = db.connect()
+    assert catalog.list_inventory(conn) == []
+    conn.close()
+
+
+def test_app_runs_without_the_ml_libraries(conn, monkeypatch):
+    """Hosted installs skip pandas/scikit-learn; the planner must still work."""
+    import builtins
+    real_import = builtins.__import__
+
+    def blocked(name, *args, **kwargs):
+        if name.split(".")[0] in ("pandas", "sklearn", "joblib", "numpy"):
+            raise ImportError(name)
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", blocked)
+    planner._model_bundle.cache_clear()
+    seed.seed_demo(conn)
+    assert planner.reorder_suggestions(conn)["items"]
+    planner._model_bundle.cache_clear()

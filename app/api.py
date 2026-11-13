@@ -15,24 +15,39 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from . import assistant, catalog, db, khata, orders, planner
+from . import assistant, catalog, db, khata, orders, planner, seed
+
+
+_prepared = False
+
+
+def ensure_ready() -> None:
+    """Set the database up once per process. Serverless hosts may not run startup events."""
+    global _prepared
+    if not _prepared:
+        seed.prepare_database()
+        _prepared = True
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    db.init_db()
+    ensure_ready()
     yield
 
 
 app = FastAPI(title="KiranaWise Store API", version="3.0.0", lifespan=lifespan)
 
 _origins = os.environ.get("KIRANA_CORS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
+# The app has no logins or cookies, so credentials are off. That also allows KIRANA_CORS="*".
+# Any https://something.vercel.app frontend is allowed by default so a Vercel deployment just works.
 app.add_middleware(CORSMiddleware, allow_origins=[o.strip() for o in _origins if o.strip()],
-                   allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+                   allow_origin_regex=os.environ.get("KIRANA_CORS_REGEX", r"https://.*\.vercel\.app"),
+                   allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
 
 
 def get_conn():
     """One database connection per request; saved on success, undone on error."""
+    ensure_ready()
     conn = db.connect()
     try:
         yield conn

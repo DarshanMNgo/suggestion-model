@@ -1,0 +1,6 @@
+# Only for the optional demand model (python -m app.data_generator, python -m app.train)
+-r requirements.txt
+pandas>=2.2
+numpy>=1.26
+scikit-learn>=1.4
+joblib>=1.3

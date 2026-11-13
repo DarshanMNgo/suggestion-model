@@ -25,7 +25,16 @@ DEFAULT_SETTINGS = {
 
 
 def db_path() -> Path:
-    return Path(os.environ.get("KIRANA_DB", DEFAULT_DB_PATH))
+    """Where the shop database lives.
+
+    KIRANA_DB wins if set. On Vercel the project folder is read-only, so the database goes in
+    /tmp there (it is wiped when the function restarts, which is why the sample shop is reloaded).
+    """
+    if os.environ.get("KIRANA_DB"):
+        return Path(os.environ["KIRANA_DB"])
+    if os.environ.get("VERCEL"):
+        return Path("/tmp/kirana_store.db")
+    return DEFAULT_DB_PATH
 
 
 def connect() -> sqlite3.Connection:
