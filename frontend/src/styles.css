@@ -190,6 +190,7 @@ input:focus, select:focus { border-color: var(--green); outline: none; }
 .bubble { max-width: 88%; padding: 12px 14px; border-radius: 16px; font-size: 1.02rem; }
 .bubble.bot { background: var(--green-soft); align-self: flex-start; border-bottom-left-radius: 4px; }
 .bubble.you { background: var(--green); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+.bubble.note { background: var(--amber-soft); border: 1px solid #f0d9a8; align-self: stretch; max-width: 100%; font-size: 0.9rem; }
 .confirm-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .chat-input { display: grid; grid-template-columns: 56px 1fr auto; gap: 8px; align-items: center; }
 .mic { width: 56px; height: 56px; border-radius: 50%; border: 0; background: var(--green); color: #fff; font-size: 1.5rem; }

@@ -79,6 +79,7 @@ const en = {
   speakReplies: "Speak replies", examples: "Try saying", ex1: "\"Sold 5 milk\"", ex2: "\"Add 20 sugar\"",
   ex3: "\"What should I buy?\"", ex4: "\"Ramesh took 200 udhar\"", ex5: "\"What is expiring?\"",
   didNotHear: "I did not hear anything. Try again.",
+  noVoice: "This device has no {language} voice, so I cannot speak {language} aloud. Replies still appear as text. For a spoken voice, try Microsoft Edge (it usually has online Kannada and Hindi voices) or, on Android, install the Google speech voice for that language.",
 };
 
 const hi = {
@@ -144,6 +145,7 @@ const hi = {
   speakReplies: "जवाब बोलकर सुनाएं", examples: "ऐसे बोलें", ex1: "\"5 दूध बेचा\"", ex2: "\"20 चीनी आई\"",
   ex3: "\"क्या मंगवाना है?\"", ex4: "\"रमेश ने 200 उधार लिया\"", ex5: "\"क्या एक्सपायर हो रहा है?\"",
   didNotHear: "कुछ सुनाई नहीं दिया। फिर कोशिश करें।",
+  noVoice: "इस डिवाइस में {language} आवाज़ नहीं है, इसलिए मैं {language} बोलकर नहीं सुना सकता। जवाब लिखे हुए दिखते रहेंगे। बोलकर सुनने के लिए Microsoft Edge आज़माएँ (उसमें आमतौर पर ऑनलाइन हिंदी और कन्नड़ आवाज़ें होती हैं) या Android पर उस भाषा की Google आवाज़ इंस्टॉल करें।",
 };
 
 const kn = {
@@ -209,6 +211,7 @@ const kn = {
   speakReplies: "ಉತ್ತರವನ್ನು ಓದಿ ಹೇಳಿ", examples: "ಹೀಗೆ ಹೇಳಿ", ex1: "\"5 ಹಾಲು ಮಾರಿದೆ\"", ex2: "\"20 ಸಕ್ಕರೆ ಬಂತು\"",
   ex3: "\"ಏನು ತರಬೇಕು?\"", ex4: "\"ರಮೇಶ್ 200 ಉದ್ರಿ ತೆಗೆದುಕೊಂಡ\"", ex5: "\"ಯಾವುದು ಎಕ್ಸ್‌ಪೈರ್ ಆಗುತ್ತಿದೆ?\"",
   didNotHear: "ಏನೂ ಕೇಳಿಸಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+  noVoice: "ಈ ಸಾಧನದಲ್ಲಿ {language} ಧ್ವನಿ ಇಲ್ಲ, ಆದ್ದರಿಂದ ನಾನು {language}ದಲ್ಲಿ ಜೋರಾಗಿ ಹೇಳಲಾರೆ. ಉತ್ತರಗಳು ಬರಹದಲ್ಲಿ ಕಾಣಿಸುತ್ತವೆ. ಧ್ವನಿ ಕೇಳಲು Microsoft Edge ಪ್ರಯತ್ನಿಸಿ (ಅದರಲ್ಲಿ ಸಾಮಾನ್ಯವಾಗಿ ಆನ್‌ಲೈನ್ ಕನ್ನಡ ಮತ್ತು ಹಿಂದಿ ಧ್ವನಿಗಳಿರುತ್ತವೆ) ಅಥವಾ Android ನಲ್ಲಿ ಆ ಭಾಷೆಯ Google ಧ್ವನಿ ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ.",
 };
 
 export const STRINGS = { en, hi, kn };
