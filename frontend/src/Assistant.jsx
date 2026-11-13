@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api";
-import { LANGUAGES, NO_WORDS, YES_WORDS } from "./i18n";
+import { fill, LANGUAGES, NO_WORDS, YES_WORDS } from "./i18n";
 import { useApp } from "./context";
 
 const Recognition = typeof window !== "undefined" ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
@@ -35,6 +35,17 @@ export default function Assistant() {
   });
   const recognizer = useRef(null);
   const bottom = useRef(null);
+  const [voices, setVoices] = useState([]);
+  const warnedVoice = useRef({});
+
+  // The browser loads its list of voices a moment after the page opens.
+  useEffect(() => {
+    if (!("speechSynthesis" in window)) return undefined;
+    const load = () => setVoices(window.speechSynthesis.getVoices());
+    load();
+    window.speechSynthesis.addEventListener?.("voiceschanged", load);
+    return () => window.speechSynthesis.removeEventListener?.("voiceschanged", load);
+  }, []);
 
   useEffect(() => {
     try { localStorage.setItem("kw_speak", speakOn ? "on" : "off"); } catch { /* storage may be blocked */ }
@@ -50,23 +61,39 @@ export default function Assistant() {
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
   }, []);
 
-  const say = useCallback((text) => {
+  const say = useCallback((text, replyLang) => {
     if (!speakOn || !("speechSynthesis" in window)) return;
+    const language = LANGUAGES.find((l) => l.code === replyLang);
+    const code = language?.speech || speechCode;
+    const base = code.slice(0, 2).toLowerCase();
+    const matching = voices.filter((v) => v.lang.replace("_", "-").toLowerCase().startsWith(base));
+    // Prefer the natural-sounding (usually online) voice when the device has one.
+    const voice = matching.find((v) => /natural|online/i.test(v.name)) || matching[0] || null;
+
+    if (!voice && voices.length > 0 && base !== "en") {
+      // No voice for this language on this device: say so once, instead of staying silent or mispronouncing.
+      if (!warnedVoice.current[base]) {
+        warnedVoice.current[base] = true;
+        setMessages((list) => [...list, { from: "note", text: fill(t.noVoice, { language: language?.label || code }) }]);
+      }
+      return;
+    }
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = speechCode;
+    utterance.lang = voice ? voice.lang : code;
+    if (voice) utterance.voice = voice;
     window.speechSynthesis.speak(utterance);
-  }, [speakOn, speechCode]);
+  }, [speakOn, speechCode, voices, t]);
 
   const addMessage = (from, text) => setMessages((list) => [...list, { from, text }]);
 
-  async function confirm(action) {
+  async function confirm({ action, lang: replyLang }) {
     setBusy(true);
     setPending(null);
     try {
-      const result = await api.post("/assistant/confirm", { action, lang });
+      const result = await api.post("/assistant/confirm", { action, lang: replyLang });
       addMessage("bot", result.reply);
-      say(result.reply);
+      say(result.reply, replyLang);
       if (result.ok) bump();
     } catch (err) {
       addMessage("bot", err.message === "OFFLINE" ? t.offlineTitle : err.message);
@@ -76,10 +103,11 @@ export default function Assistant() {
   }
 
   function cancel() {
-    setPending(null);
-    const text = lang === "hi" ? "ठीक है, रद्द किया।" : lang === "kn" ? "ಸರಿ, ರದ್ದು ಮಾಡಿದೆ." : "Okay, cancelled.";
+    const replyLang = pending?.lang || lang;
+    const text = replyLang === "hi" ? "ठीक है, रद्द किया।" : replyLang === "kn" ? "ಸರಿ, ರದ್ದು ಮಾಡಿದೆ." : "Okay, cancelled.";
     addMessage("bot", text);
-    say(text);
+    say(text, replyLang);
+    setPending(null);
   }
 
   async function send(raw) {
@@ -93,9 +121,10 @@ export default function Assistant() {
     setBusy(true);
     try {
       const result = await api.post("/assistant", { text, lang });
+      const replyLang = result.lang || lang; // answered in the language the owner used
       addMessage("bot", result.reply);
-      say(result.reply);
-      if (result.needs_confirm && result.action) setPending(result.action);
+      say(result.reply, replyLang);
+      if (result.needs_confirm && result.action) setPending({ action: result.action, lang: replyLang });
     } catch (err) {
       addMessage("bot", err.message === "OFFLINE" ? t.offlineTitle : err.message);
     } finally {

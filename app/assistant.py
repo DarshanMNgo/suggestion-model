@@ -23,23 +23,23 @@ from . import catalog, khata, orders, planner
 
 WORDS = {
     "sell": ["sold", "sell", "sale", "becha", "beche", "bech", "bika", "bikri", "बेचा", "बेचे", "बिका",
-             "बिक्री", "ಮಾರಾಟ", "ಮಾರಿದೆ", "ಮಾರಿದೆವು", "ಮಾರಿದ", "maaride", "maarata"],
+             "बिक्री", "ಮಾರಾಟ", "ಮಾರಿದೆ", "ಮಾರಿದೆವು", "ಮಾರಿದ", "ಮಾರಿ", "maaride", "maarata"],
     "add": ["add", "received", "receive", "got", "arrived", "bought", "aaya", "aaye", "aya", "mila",
-            "आया", "आए", "मिला", "जोड़ो", "जोड़", "जोड़ें", "ಬಂತು", "ಬಂದಿದೆ", "ಸೇರಿಸಿ", "ಸೇರಿಸು", "bantu"],
+            "आया", "आए", "मिला", "जोड़ो", "जोड़", "जोड़ें", "ಬಂತು", "ಬಂದಿದೆ", "ಬಂದವು", "ಸೇರಿಸಿ", "ಸೇರಿಸು", "ಹಾಕಿ", "ಹಾಕು", "ತಂದೆ", "ಖರೀದಿಸಿದೆ", "bantu"],
     "stock": ["stock", "have", "left", "remaining", "kitna", "kitne", "kitni", "बचा", "कितना", "कितने",
-              "कितनी", "स्टॉक", "ಎಷ್ಟು", "ಸ್ಟಾಕ್", "ಉಳಿದಿದೆ", "eshtu", "balance"],
+              "कितनी", "स्टॉक", "ಎಷ್ಟು", "ಎಷ್ಟಿದೆ", "ಸ್ಟಾಕ್", "ಸ್ಟಾಕ್‌", "ಉಳಿದಿದೆ", "ಉಳಿದಿದ್ದು", "eshtu", "eshtide", "balance"],
     "order": ["order", "buy", "purchase", "reorder", "mangwana", "mangwao", "mangana", "kharid", "kharidna",
-              "मंगवाना", "मंगाना", "मंगवाओ", "खरीदना", "खरीदें", "ಆರ್ಡರ್", "ತರಬೇಕು", "ಖರೀದಿ", "tarabeku"],
-    "make_order": ["make", "create", "prepare", "draft", "banao", "bana", "बनाओ", "बनाएं", "ಮಾಡಿ", "ತಯಾರಿಸಿ"],
+              "मंगवाना", "मंगाना", "मंगवाओ", "खरीदना", "खरीदें", "ಆರ್ಡರ್", "ತರಬೇಕು", "ತರಿಸಬೇಕು", "ತರಬೇಕಾದ", "ಖರೀದಿ", "ಕೊಳ್ಳಬೇಕು", "tarabeku"],
+    "make_order": ["make", "create", "prepare", "draft", "banao", "bana", "बनाओ", "बनाएं", "ಮಾಡಿ", "ತಯಾರಿಸಿ", "ಮಾಡು"],
     "expiry": ["expiry", "expire", "expiring", "expired", "expires", "kharab", "खराब", "एक्सपायरी",
-               "ಮುಗಿಯುವ", "ಎಕ್ಸ್‌ಪೈರಿ", "ಎಕ್ಸ್ಪೈರಿ", "ಅವಧಿ"],
+               "ಮುಗಿಯುವ", "ಎಕ್ಸ್‌ಪೈರಿ", "ಎಕ್ಸ್ಪೈರಿ", "ಎಕ್ಸ್ಪೈರ್", "ಅವಧಿ", "ಹಾಳಾಗ"],
     "dead": ["dead", "slow", "unsold", "idle", "nahi bika", "ಮಾರಾಟವಾಗದ", "नहीं बिका", "बेकार", "dead stock"],
     "summary": ["today", "aaj", "aj", "summary", "report", "total", "आज", "ಇಂದು", "ಇವತ್ತು", "sales", "bikri"],
     "khata": ["khata", "udhar", "udhaar", "credit", "owe", "owes", "due", "pending", "baaki", "baki",
               "खाता", "उधार", "बाकी", "ಖಾತಾ", "ಉದ್ರಿ", "ಬಾಕಿ", "ಸಾಲ", "udri"],
     "paid": ["paid", "pay", "returned", "gave", "diya", "di", "chukaya", "jama", "दिया", "दी", "चुकाया",
-             "जमा", "ಕೊಟ್ಟರು", "ಪಾವತಿ", "ಕಟ್ಟಿದ", "ಕೊಟ್ಟ", "kotta", "paid back"],
-    "took": ["took", "taken", "lena", "liya", "li", "le", "लिया", "ली", "ಪಡೆದ", "ತೆಗೆದುಕೊಂಡ", "teskonda"],
+             "जमा", "ಕೊಟ್ಟರು", "ಪಾವತಿ", "ಕಟ್ಟಿದ", "ಕಟ್ಟಿದರು", "ವಾಪಸ್", "ಕೊಟ್ಟ", "kotta", "paid back"],
+    "took": ["took", "taken", "lena", "liya", "li", "le", "लिया", "ली", "ಪಡೆದ", "ತೆಗೆದುಕೊಂಡ", "ತಗೊಂಡ", "ತಗೊಂಡರು", "teskonda"],
     "low": ["low", "kam", "short", "कम", "ಕಡಿಮೆ", "kadime"],
     "yes": ["yes", "confirm", "ok", "okay", "haan", "han", "ha", "theek", "thik", "sahi", "हाँ", "हां", "ठीक",
             "सही", "ಹೌದು", "ಸರಿ", "ಓಕೆ", "ಹಾಂ", "ಕನ್ಫರ್ಮ್"],
@@ -72,9 +72,25 @@ FILLER = {
 _ALL_COMMAND_WORDS = {w for key, words in WORDS.items() for w in words}
 
 
+_NO_STEMMING = {"yes", "no"}  # short answers must match exactly ("ಇಲ್ಲ" must not match "ಇಲ್ಲಿ")
+
+
+def _is_word(token: str, key: str) -> bool:
+    """Does this spoken token mean one of the words for `key`? Kannada endings are allowed."""
+    if token in WORDS[key]:
+        return True
+    if key in _NO_STEMMING or not catalog.is_kannada(token):
+        return False
+    return any(catalog.kannada_prefix_match(token, word) for word in WORDS[key])
+
+
 def _has(tokens: list[str], key: str) -> bool:
-    return any(token in WORDS[key] for token in tokens) or any(
+    return any(_is_word(token, key) for token in tokens) or any(
         phrase in " ".join(tokens) for phrase in WORDS[key] if " " in phrase)
+
+
+def _is_command_token(token: str) -> bool:
+    return token in _ALL_COMMAND_WORDS or any(_is_word(token, key) for key in WORDS)
 
 
 def _numbers(tokens: list[str]) -> list[int]:
@@ -216,7 +232,7 @@ def _money(value: float) -> str:
 
 # ---------------------------------------------------------------- understanding
 
-def interpret(conn: sqlite3.Connection, text: str, lang: str = "en") -> dict:
+def _interpret(conn: sqlite3.Connection, text: str, lang: str = "en") -> dict:
     """Understand one command.
 
     Returns a dict with:
@@ -239,7 +255,8 @@ def interpret(conn: sqlite3.Connection, text: str, lang: str = "en") -> dict:
         return reply("greet")
 
     numbers = _numbers(tokens)
-    hits = catalog.match_products(conn, tokens, skip=_ALL_COMMAND_WORDS | FILLER)
+    skip = {token for token in tokens if token in FILLER or _is_command_token(token)}
+    hits = catalog.match_products(conn, tokens, skip=skip)
     product = hits[0][0] if hits else None
 
     # --- information questions --------------------------------------------------
@@ -345,6 +362,21 @@ def interpret(conn: sqlite3.Connection, text: str, lang: str = "en") -> dict:
     return reply("unknown")
 
 
+def interpret(conn: sqlite3.Connection, text: str, lang: str = "en") -> dict:
+    """Understand one command and answer in the language it was spoken or typed in.
+
+    Typing Kannada while the app is set to English still gets a Kannada answer.
+    The answer's language is returned as `lang` so the app can also speak it correctly.
+    """
+    if catalog.is_kannada(text):
+        lang = "kn"
+    elif catalog.is_devanagari(text):
+        lang = "hi"
+    result = _interpret(conn, text, lang)
+    result["lang"] = lang
+    return result
+
+
 def _summary(conn: sqlite3.Connection, lang: str) -> dict:
     data = planner.daily_summary(conn)
     return {"reply": say(lang, "summary", total=_money(data["today"]["total"]), entries=data["today"]["entries"],
@@ -355,7 +387,7 @@ def _summary(conn: sqlite3.Connection, lang: str) -> dict:
 def _unknown_name(tokens: list[str]) -> str:
     """The first word that is not a number, filler or command word: probably the item they meant."""
     for token in tokens:
-        if not token.isdigit() and token not in FILLER and token not in _ALL_COMMAND_WORDS \
+        if not token.isdigit() and token not in FILLER and not _is_command_token(token) \
                 and token not in NUMBER_WORDS and len(token) > 1:
             return token
     return ""
@@ -364,7 +396,7 @@ def _unknown_name(tokens: list[str]) -> str:
 def _find_person(conn: sqlite3.Connection, tokens: list[str], hits) -> dict | None:
     product_positions = {pos for _, start, end in hits for pos in range(start, end + 1)}
     for pos, token in enumerate(tokens):
-        if pos in product_positions or token in _ALL_COMMAND_WORDS or token in FILLER or token.isdigit():
+        if pos in product_positions or _is_command_token(token) or token in FILLER or token.isdigit():
             continue
         person = khata.find_customer(conn, token)
         if person:

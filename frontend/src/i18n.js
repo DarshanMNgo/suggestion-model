@@ -40,6 +40,7 @@ const en = {
   stockTitle: "Stock", filterAll: "All", filterLow: "Low", filterExpiry: "Expiring", filterDead: "Not selling",
   addItem: "Add item", editItem: "Edit item", itemName: "Item name", unit: "Unit (kg, packet…)",
   inStock: "In stock", alertAt: "Alert me at", costPrice: "Buying price", sellPrice: "Selling price",
+  otherNames: "Other names (Hindi, Kannada…)", otherNamesHint: "Separate with commas. The voice assistant uses these.",
   supplier: "Supplier", shelfLife: "Shelf life (days)", shelfHint: "0 if it does not expire",
   goodsArrived: "Goods arrived", qtyArrived: "How many arrived?", expiryDate: "Expiry date", addToStock: "Add to stock",
   low: "Low", expiresIn: "Expires in {days} days", expiresToday: "Expires today", expired: "Expired",
@@ -78,6 +79,7 @@ const en = {
   speakReplies: "Speak replies", examples: "Try saying", ex1: "\"Sold 5 milk\"", ex2: "\"Add 20 sugar\"",
   ex3: "\"What should I buy?\"", ex4: "\"Ramesh took 200 udhar\"", ex5: "\"What is expiring?\"",
   didNotHear: "I did not hear anything. Try again.",
+  noVoice: "This device has no {language} voice, so I cannot speak {language} aloud. Replies still appear as text. For a spoken voice, try Microsoft Edge (it usually has online Kannada and Hindi voices) or, on Android, install the Google speech voice for that language.",
 };
 
 const hi = {
@@ -108,6 +110,7 @@ const hi = {
   stockTitle: "स्टॉक", filterAll: "सब", filterLow: "कम", filterExpiry: "एक्सपायरी", filterDead: "नहीं बिक रहा",
   addItem: "सामान जोड़ें", editItem: "सामान बदलें", itemName: "सामान का नाम", unit: "इकाई (किलो, पैकेट…)",
   inStock: "स्टॉक में", alertAt: "इस पर अलर्ट दें", costPrice: "खरीद दाम", sellPrice: "बेचने का दाम",
+  otherNames: "दूसरे नाम (हिंदी, कन्नड़…)", otherNamesHint: "कॉमा से अलग करें। आवाज़ सहायक इन्हें पहचानता है।",
   supplier: "सप्लायर", shelfLife: "शेल्फ लाइफ (दिन)", shelfHint: "एक्सपायर नहीं होता तो 0",
   goodsArrived: "माल आया", qtyArrived: "कितना आया?", expiryDate: "एक्सपायरी की तारीख", addToStock: "स्टॉक में जोड़ें",
   low: "कम", expiresIn: "{days} दिन में एक्सपायर", expiresToday: "आज एक्सपायर", expired: "एक्सपायर हो गया",
@@ -142,6 +145,7 @@ const hi = {
   speakReplies: "जवाब बोलकर सुनाएं", examples: "ऐसे बोलें", ex1: "\"5 दूध बेचा\"", ex2: "\"20 चीनी आई\"",
   ex3: "\"क्या मंगवाना है?\"", ex4: "\"रमेश ने 200 उधार लिया\"", ex5: "\"क्या एक्सपायर हो रहा है?\"",
   didNotHear: "कुछ सुनाई नहीं दिया। फिर कोशिश करें।",
+  noVoice: "इस डिवाइस में {language} आवाज़ नहीं है, इसलिए मैं {language} बोलकर नहीं सुना सकता। जवाब लिखे हुए दिखते रहेंगे। बोलकर सुनने के लिए Microsoft Edge आज़माएँ (उसमें आमतौर पर ऑनलाइन हिंदी और कन्नड़ आवाज़ें होती हैं) या Android पर उस भाषा की Google आवाज़ इंस्टॉल करें।",
 };
 
 const kn = {
@@ -172,6 +176,7 @@ const kn = {
   stockTitle: "ಸ್ಟಾಕ್", filterAll: "ಎಲ್ಲಾ", filterLow: "ಕಡಿಮೆ", filterExpiry: "ಅವಧಿ", filterDead: "ಮಾರಾಟವಿಲ್ಲ",
   addItem: "ವಸ್ತು ಸೇರಿಸಿ", editItem: "ವಸ್ತು ಬದಲಿಸಿ", itemName: "ವಸ್ತುವಿನ ಹೆಸರು", unit: "ಘಟಕ (ಕೆಜಿ, ಪ್ಯಾಕೆಟ್…)",
   inStock: "ಸ್ಟಾಕ್‌ನಲ್ಲಿ", alertAt: "ಈ ಪ್ರಮಾಣಕ್ಕೆ ಎಚ್ಚರಿಸಿ", costPrice: "ಖರೀದಿ ಬೆಲೆ", sellPrice: "ಮಾರಾಟ ಬೆಲೆ",
+  otherNames: "ಇತರ ಹೆಸರುಗಳು (ಹಿಂದಿ, ಕನ್ನಡ…)", otherNamesHint: "ಕಾಮಾದಿಂದ ಬೇರ್ಪಡಿಸಿ. ಧ್ವನಿ ಸಹಾಯಕ ಇವುಗಳನ್ನು ಗುರುತಿಸುತ್ತದೆ.",
   supplier: "ಸರಬರಾಜುದಾರ", shelfLife: "ಶೆಲ್ಫ್ ಲೈಫ್ (ದಿನ)", shelfHint: "ಅವಧಿ ಮುಗಿಯದಿದ್ದರೆ 0",
   goodsArrived: "ಸರಕು ಬಂತು", qtyArrived: "ಎಷ್ಟು ಬಂತು?", expiryDate: "ಅವಧಿ ಮುಗಿಯುವ ದಿನಾಂಕ", addToStock: "ಸ್ಟಾಕ್‌ಗೆ ಸೇರಿಸಿ",
   low: "ಕಡಿಮೆ", expiresIn: "{days} ದಿನಗಳಲ್ಲಿ ಅವಧಿ ಮುಗಿಯುತ್ತದೆ", expiresToday: "ಇಂದು ಅವಧಿ ಮುಗಿಯುತ್ತದೆ", expired: "ಅವಧಿ ಮುಗಿದಿದೆ",
@@ -206,6 +211,7 @@ const kn = {
   speakReplies: "ಉತ್ತರವನ್ನು ಓದಿ ಹೇಳಿ", examples: "ಹೀಗೆ ಹೇಳಿ", ex1: "\"5 ಹಾಲು ಮಾರಿದೆ\"", ex2: "\"20 ಸಕ್ಕರೆ ಬಂತು\"",
   ex3: "\"ಏನು ತರಬೇಕು?\"", ex4: "\"ರಮೇಶ್ 200 ಉದ್ರಿ ತೆಗೆದುಕೊಂಡ\"", ex5: "\"ಯಾವುದು ಎಕ್ಸ್‌ಪೈರ್ ಆಗುತ್ತಿದೆ?\"",
   didNotHear: "ಏನೂ ಕೇಳಿಸಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+  noVoice: "ಈ ಸಾಧನದಲ್ಲಿ {language} ಧ್ವನಿ ಇಲ್ಲ, ಆದ್ದರಿಂದ ನಾನು {language}ದಲ್ಲಿ ಜೋರಾಗಿ ಹೇಳಲಾರೆ. ಉತ್ತರಗಳು ಬರಹದಲ್ಲಿ ಕಾಣಿಸುತ್ತವೆ. ಧ್ವನಿ ಕೇಳಲು Microsoft Edge ಪ್ರಯತ್ನಿಸಿ (ಅದರಲ್ಲಿ ಸಾಮಾನ್ಯವಾಗಿ ಆನ್‌ಲೈನ್ ಕನ್ನಡ ಮತ್ತು ಹಿಂದಿ ಧ್ವನಿಗಳಿರುತ್ತವೆ) ಅಥವಾ Android ನಲ್ಲಿ ಆ ಭಾಷೆಯ Google ಧ್ವನಿ ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ.",
 };
 
 export const STRINGS = { en, hi, kn };

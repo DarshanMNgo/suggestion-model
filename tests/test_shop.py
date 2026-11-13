@@ -274,3 +274,66 @@ def test_seed_is_idempotent(conn):
     assert seed.seed_demo(conn)["seeded"]
     assert not seed.seed_demo(conn)["seeded"]
     assert seed.seed_demo(conn, reset=True)["seeded"]
+
+
+# ------------------------------------------------------------------ Kannada (endings, names, spellings)
+
+@pytest.mark.parametrize("text,qty", [
+    ("ಹಾಲನ್ನು 5 ಮಾರಿದೆ", 5),        # ಹಾಲು + ending
+    ("ಐದು ಹಾಲು ಮಾರಿದೆವು", 5),      # number word and verb ending
+    ("ಹಾಲು ಐದು ಮಾರಿದ್ದೇನೆ", 5),     # different word order
+    ("೫ ಹಾಲು ಮಾರಿದೆ", 5),           # Kannada digit
+    ("milk 5 ಮಾರಿದೆ", 5),           # English and Kannada mixed
+])
+def test_kannada_sell_variations(demo, text, qty):
+    out = assistant.interpret(demo, text, "en")  # app set to English, owner types Kannada
+    assert out["needs_confirm"] and out["action"]["product"] == "Milk" and out["action"]["quantity"] == qty
+    assert out["lang"] == "kn"                    # the answer comes back in Kannada
+
+
+@pytest.mark.parametrize("text,product", [
+    ("ಹಾಲು ಎಷ್ಟಿದೆ", "Milk"),            # "eshtu ide" spoken together
+    ("ಅಕ್ಕಿ ಎಷ್ಟು ಇದೆ", "Rice 1kg"),
+    ("ಮೊಸರು ಎಷ್ಟಿದೆ", "Curd 400g"),
+])
+def test_kannada_stock_questions(demo, text, product):
+    out = assistant.interpret(demo, text, "kn")
+    assert product in out["reply"] and not out["needs_confirm"]
+
+
+def test_kannada_receive_order_and_expiry_words(demo):
+    assert assistant.interpret(demo, "ಅಕ್ಕಿಯನ್ನು 10 ಸೇರಿಸಿ", "kn")["action"]["type"] == "receive"
+    assert assistant.interpret(demo, "ಸಕ್ಕರೆ 20 ಬಂದಿದೆ", "kn")["action"]["type"] == "receive"
+    assert assistant.interpret(demo, "ಏನು ತರಿಸಬೇಕು", "kn")["reply"]
+    assert assistant.interpret(demo, "ಆರ್ಡರ್ ಮಾಡಿ", "kn")["action"]["type"] == "make_order"
+    assert "Curd" in assistant.interpret(demo, "ಎಕ್ಸ್ಪೈರ್ ಆಗುವ ವಸ್ತುಗಳು", "kn")["reply"]
+    assert "Hair Oil" in assistant.interpret(demo, "ಮಾರಾಟವಾಗದ ವಸ್ತು", "kn")["reply"]
+
+
+def test_kannada_name_finds_english_customer(demo):
+    base = khata.find_customer(demo, "Ramesh")["balance"]
+    out = assistant.interpret(demo, "ರಮೇಶ್ 100 ಕೊಟ್ಟರು", "kn")        # "Ramesh paid 100"
+    assert out["action"] == {"type": "khata", "kind": "payment", "customer": "Ramesh", "amount": 100}
+    assistant.execute(demo, out["action"], "kn")
+    assert khata.find_customer(demo, "Ramesh")["balance"] == base - 100
+    assert len(khata.list_customers(demo)) == len(seed.DEMO_CUSTOMERS)   # no duplicate "ರಮೇಶ್" customer
+    assert "Ramesh" in assistant.interpret(demo, "ರಮೇಶ್ ಎಷ್ಟು ಬಾಕಿ", "kn")["reply"]
+
+
+def test_owner_can_teach_a_kannada_name(conn):
+    catalog.upsert_product(conn, "Parle-G", stock=40, aliases="ಪಾರ್ಲೆ ಜಿ, ಪಾರ್ಲೆ")
+    out = assistant.interpret(conn, "ಪಾರ್ಲೆ 3 ಮಾರಿದೆ", "kn")
+    assert out["action"]["product"] == "Parle-G"
+
+
+def test_two_items_sharing_a_word_ask_instead_of_guessing(conn):
+    catalog.upsert_product(conn, "Cooking Oil 1L", stock=5)
+    catalog.upsert_product(conn, "Hair Oil", stock=5)
+    out = assistant.interpret(conn, "ಎಣ್ಣೆ 2 ಮಾರಿದೆ", "kn")   # "oil": which one?
+    assert not out["needs_confirm"]
+
+
+def test_english_hindi_still_unaffected_by_kannada_matching(demo):
+    assert assistant.interpret(demo, "sold 5 milk")["action"]["quantity"] == 5
+    assert assistant.interpret(demo, "5 doodh becha", "hi")["action"]["product"] == "Milk"
+    assert not assistant.is_yes("ಇಲ್ಲಿ") and assistant.is_no("ಇಲ್ಲ")
