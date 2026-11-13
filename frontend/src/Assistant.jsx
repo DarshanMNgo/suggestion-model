@@ -50,23 +50,23 @@ export default function Assistant() {
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
   }, []);
 
-  const say = useCallback((text) => {
+  const say = useCallback((text, replyLang) => {
     if (!speakOn || !("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = speechCode;
+    utterance.lang = LANGUAGES.find((l) => l.code === replyLang)?.speech || speechCode;
     window.speechSynthesis.speak(utterance);
   }, [speakOn, speechCode]);
 
   const addMessage = (from, text) => setMessages((list) => [...list, { from, text }]);
 
-  async function confirm(action) {
+  async function confirm({ action, lang: replyLang }) {
     setBusy(true);
     setPending(null);
     try {
-      const result = await api.post("/assistant/confirm", { action, lang });
+      const result = await api.post("/assistant/confirm", { action, lang: replyLang });
       addMessage("bot", result.reply);
-      say(result.reply);
+      say(result.reply, replyLang);
       if (result.ok) bump();
     } catch (err) {
       addMessage("bot", err.message === "OFFLINE" ? t.offlineTitle : err.message);
@@ -76,10 +76,11 @@ export default function Assistant() {
   }
 
   function cancel() {
-    setPending(null);
-    const text = lang === "hi" ? "ठीक है, रद्द किया।" : lang === "kn" ? "ಸರಿ, ರದ್ದು ಮಾಡಿದೆ." : "Okay, cancelled.";
+    const replyLang = pending?.lang || lang;
+    const text = replyLang === "hi" ? "ठीक है, रद्द किया।" : replyLang === "kn" ? "ಸರಿ, ರದ್ದು ಮಾಡಿದೆ." : "Okay, cancelled.";
     addMessage("bot", text);
-    say(text);
+    say(text, replyLang);
+    setPending(null);
   }
 
   async function send(raw) {
@@ -93,9 +94,10 @@ export default function Assistant() {
     setBusy(true);
     try {
       const result = await api.post("/assistant", { text, lang });
+      const replyLang = result.lang || lang; // answered in the language the owner used
       addMessage("bot", result.reply);
-      say(result.reply);
-      if (result.needs_confirm && result.action) setPending(result.action);
+      say(result.reply, replyLang);
+      if (result.needs_confirm && result.action) setPending({ action: result.action, lang: replyLang });
     } catch (err) {
       addMessage("bot", err.message === "OFFLINE" ? t.offlineTitle : err.message);
     } finally {

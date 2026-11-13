@@ -1,6 +1,7 @@
 """Khata: the notebook where the owner writes who owes how much (udhar)."""
 from __future__ import annotations
 
+import difflib
 import sqlite3
 
 from . import catalog, db
@@ -39,7 +40,26 @@ def find_customer(conn: sqlite3.Connection, text: str) -> dict | None:
         if catalog.normalize_text(person["name"]) == wanted:
             return person
     partial = [p for p in people if wanted in catalog.normalize_text(p["name"])]
-    return partial[0] if len(partial) == 1 else None
+    if len(partial) == 1:
+        return partial[0]
+    if catalog.is_kannada(wanted):
+        return _find_by_sound(people, wanted)
+    return None
+
+
+def _find_by_sound(people: list[dict], spoken: str) -> dict | None:
+    """A name said in Kannada (ರಮೇಶ್) should find the customer typed as Ramesh."""
+    sound = catalog.romanize_kannada(spoken)
+    scored = []
+    for person in people:
+        words = catalog.normalize_text(person["name"]).split()
+        best = max((difflib.SequenceMatcher(None, sound, w).ratio() for w in words), default=0)
+        if best >= 0.8:
+            scored.append((best, person))
+    scored.sort(key=lambda item: -item[0])
+    if len(scored) == 1 or (len(scored) > 1 and scored[0][0] - scored[1][0] >= 0.1):
+        return scored[0][1]
+    return None  # two similar names would be a guess
 
 
 def list_customers(conn: sqlite3.Connection) -> list[dict]:

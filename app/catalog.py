@@ -17,28 +17,92 @@ from . import db
 # Everyday names used in shops. They are added automatically to a new product whose
 # name contains the key, so the owner does not have to type them.
 COMMON_ALIASES: dict[str, list[str]] = {
-    "milk": ["doodh", "dudh", "दूध", "ಹಾಲು", "haalu"],
-    "rice": ["chawal", "चावल", "ಅಕ್ಕಿ", "akki"],
-    "sugar": ["cheeni", "chini", "shakkar", "चीनी", "शक्कर", "ಸಕ್ಕರೆ", "sakkare"],
-    "oil": ["tel", "तेल", "ಎಣ್ಣೆ", "enne"],
-    "egg": ["anda", "ande", "अंडा", "अंडे", "ಮೊಟ್ಟೆ", "mutte"],
-    "bread": ["pav", "double roti", "ब्रेड", "ಬ್ರೆಡ್"],
-    "biscuit": ["बिस्कुट", "ಬಿಸ್ಕತ್", "ಬಿಸ್ಕೆಟ್"],
-    "soft drink": ["cold drink", "colddrink", "soda", "कोल्ड ड्रिंक", "ಕೋಲ್ಡ್ ಡ್ರಿಂಕ್"],
-    "atta": ["flour", "wheat flour", "आटा", "ಗೋಧಿ ಹಿಟ್ಟು", "ಆಟ್ಟಾ"],
-    "tea": ["chai", "chai patti", "चाय", "ಚಹಾ"],
-    "salt": ["namak", "नमक", "ಉಪ್ಪು", "uppu"],
-    "dal": ["daal", "pulses", "दाल", "ಬೇಳೆ", "bele"],
-    "noodles": ["maggi", "मैगी", "ಮ್ಯಾಗಿ"],
-    "soap": ["sabun", "साबुन", "ಸೋಪು"],
-    "detergent": ["washing powder", "surf", "सर्फ", "ಡಿಟರ್ಜೆಂಟ್"],
+    "milk": ["doodh", "dudh", "दूध", "ಹಾಲು", "ಮಿಲ್ಕ್", "ನಂದಿನಿ ಹಾಲು", "haalu"],
+    "rice": ["chawal", "चावल", "ಅಕ್ಕಿ", "ರೈಸ್", "akki"],
+    "sugar": ["cheeni", "chini", "shakkar", "चीनी", "शक्कर", "ಸಕ್ಕರೆ", "ಶುಗರ್", "sakkare"],
+    "oil": ["tel", "तेल", "ಎಣ್ಣೆ", "ಆಯಿಲ್", "enne"],
+    "egg": ["anda", "ande", "अंडा", "अंडे", "ಮೊಟ್ಟೆ", "ಎಗ್", "mutte"],
+    "bread": ["pav", "double roti", "ब्रेड", "ಬ್ರೆಡ್", "ಪಾವ್"],
+    "biscuit": ["बिस्कुट", "ಬಿಸ್ಕತ್", "ಬಿಸ್ಕೆಟ್", "ಬಿಸ್ಕಟ್"],
+    "soft drink": ["cold drink", "colddrink", "soda", "कोल्ड ड्रिंक", "ಕೋಲ್ಡ್ ಡ್ರಿಂಕ್", "ಸಾಫ್ಟ್ ಡ್ರಿಂಕ್", "ಕೂಲ್ ಡ್ರಿಂಕ್ಸ್"],
+    "atta": ["flour", "wheat flour", "आटा", "ಗೋಧಿ ಹಿಟ್ಟು", "ಗೋಧಿಹಿಟ್ಟು", "ಆಟ್ಟಾ", "ಅಟ್ಟಾ"],
+    "tea": ["chai", "chai patti", "चाय", "ಚಹಾ", "ಟೀ", "ಟೀ ಪುಡಿ"],
+    "salt": ["namak", "नमक", "ಉಪ್ಪು", "ಸಾಲ್ಟ್", "uppu"],
+    "dal": ["daal", "pulses", "toor", "दाल", "ತೊಗರಿ ಬೇಳೆ", "ತೊಗರಿಬೇಳೆ", "ಬೇಳೆ", "bele"],
+    "noodles": ["maggi", "मैगी", "ಮ್ಯಾಗಿ", "ನೂಡಲ್ಸ್"],
+    "soap": ["sabun", "साबुन", "ಸೋಪು", "ಸಾಬೂನು"],
+    "detergent": ["washing powder", "surf", "सर्फ", "ಡಿಟರ್ಜೆಂಟ್", "ಸರ್ಫ್"],
     "ghee": ["घी", "ತುಪ್ಪ", "tuppa"],
+    "curd": ["dahi", "दही", "ಮೊಸರು", "mosaru", "ಕರ್ಡ್"],
+    "onion": ["pyaz", "प्याज", "ಈರುಳ್ಳಿ", "ಈರುಳ್ಳಿ"],
+    "potato": ["aloo", "आलू", "ಆಲೂಗಡ್ಡೆ", "ಆಲೂ"],
+    "tomato": ["tamatar", "टमाटर", "ಟೊಮೇಟೊ", "ಟೊಮ್ಯಾಟೊ", "ಟೊಮೆಟೊ"],
 }
 
 _ZERO_WIDTH = dict.fromkeys(map(ord, "​‌‍﻿"), None)
 _INDIC_DIGITS = str.maketrans("०१२३४५६७८९೦೧೨೩೪೫೬೭೮೯", "01234567890123456789")
 _SPLITTER = re.compile(r"[\s,;:.!?()\[\]\"'`।|/\\]+")
 _SIZE_WORD = re.compile(r"^\d+(\.\d+)?(kg|g|gm|l|ltr|ml|pcs)?$")
+
+# Kannada joins endings onto words: ಹಾಲು (milk) becomes ಹಾಲನ್ನು, ಹಾಲಿನ ... So a Kannada word is
+# also matched by its "stem": the word without its last vowel sign. ಹಾಲು -> ಹಾಲ matches ಹಾಲನ್ನು.
+_KANNADA_ENDINGS = set("ಾಿೀುೂೃೆೇೈೊೋೌ್")
+KANNADA_MIN_STEM = 3
+
+
+def is_kannada(text: str) -> bool:
+    return any("ಀ" <= ch <= "೿" for ch in text)
+
+
+def is_devanagari(text: str) -> bool:
+    return any("ऀ" <= ch <= "ॿ" for ch in text)
+
+
+_KN_VOWELS = {"ಅ": "a", "ಆ": "a", "ಇ": "i", "ಈ": "i", "ಉ": "u", "ಊ": "u", "ಋ": "ru", "ಎ": "e", "ಏ": "e",
+              "ಐ": "ai", "ಒ": "o", "ಓ": "o", "ಔ": "au"}
+_KN_SIGNS = {"ಾ": "a", "ಿ": "i", "ೀ": "i", "ು": "u", "ೂ": "u", "ೃ": "ru", "ೆ": "e", "ೇ": "e", "ೈ": "ai",
+             "ೊ": "o", "ೋ": "o", "ೌ": "au"}
+_KN_CONSONANTS = {"ಕ": "k", "ಖ": "kh", "ಗ": "g", "ಘ": "gh", "ಙ": "n", "ಚ": "ch", "ಛ": "chh", "ಜ": "j", "ಝ": "jh",
+                  "ಞ": "n", "ಟ": "t", "ಠ": "th", "ಡ": "d", "ಢ": "dh", "ಣ": "n", "ತ": "t", "ಥ": "th", "ದ": "d",
+                  "ಧ": "dh", "ನ": "n", "ಪ": "p", "ಫ": "f", "ಬ": "b", "ಭ": "bh", "ಮ": "m", "ಯ": "y", "ರ": "r",
+                  "ಲ": "l", "ವ": "v", "ಶ": "sh", "ಷ": "sh", "ಸ": "s", "ಹ": "h", "ಳ": "l", "ಱ": "r"}
+
+
+def romanize_kannada(word: str) -> str:
+    """Rough Latin spelling of a Kannada word (ರಮೇಶ್ -> ramesh), only for matching names."""
+    out: list[str] = []
+    chars = list(normalize_text(word))
+    for pos, ch in enumerate(chars):
+        nxt = chars[pos + 1] if pos + 1 < len(chars) else ""
+        if ch in _KN_CONSONANTS:
+            out.append(_KN_CONSONANTS[ch])
+            if nxt not in _KN_SIGNS and nxt != "\u0ccd":
+                out.append("a")  # a consonant with no sign or virama carries the sound "a"
+        elif ch in _KN_VOWELS:
+            out.append(_KN_VOWELS[ch])
+        elif ch in _KN_SIGNS:
+            out.append(_KN_SIGNS[ch])
+        elif ch == "ಂ":
+            out.append("m")
+        elif ch == "ಃ":
+            out.append("h")
+        elif ch.isascii():
+            out.append(ch)
+    text = "".join(out)
+    # names usually drop the final "a" in English spelling (Ramesha -> Ramesh)
+    return text[:-1] if len(text) > 3 and text.endswith("a") else text
+
+
+def kannada_stem(word: str) -> str:
+    return word[:-1] if word and word[-1] in _KANNADA_ENDINGS else word
+
+
+def kannada_prefix_match(token: str, word: str) -> bool:
+    """True when a spoken Kannada token is `word` with an ending attached (or is `word` itself)."""
+    if not (is_kannada(token) and is_kannada(word)):
+        return False
+    stem = kannada_stem(word)
+    return len(stem) >= KANNADA_MIN_STEM and token.startswith(stem)
 
 
 def normalize_text(text: str) -> str:
@@ -145,7 +209,23 @@ def match_products(conn: sqlite3.Connection, tokens: list[str], skip: set[str] |
             if key in index:
                 claim(start, end, index[key])
 
+    # Kannada words with endings attached (ಹಾಲನ್ನು, ಅಕ್ಕಿಯನ್ನು): match on the word stem.
     keys = list(index)
+    for pos, token in enumerate(tokens):
+        if taken[pos] or token in skip or not is_kannada(token):
+            continue
+        best_len, owners = 0, set()
+        for key in keys:
+            if " " in key or not kannada_prefix_match(token, key):
+                continue
+            stem_len = len(kannada_stem(key))
+            if stem_len > best_len:
+                best_len, owners = stem_len, {index[key]}
+            elif stem_len == best_len:
+                owners.add(index[key])
+        if len(owners) == 1:  # two different items would be a guess, so leave it
+            claim(pos, pos, next(iter(owners)))
+
     for pos, token in enumerate(tokens):
         if taken[pos] or token in skip or token.isdigit() or len(token) < 4:
             continue

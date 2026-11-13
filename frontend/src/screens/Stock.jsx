@@ -6,7 +6,7 @@ import { useLoad } from "../hooks";
 import { Badge, ErrorBox, Field, Loading, Page, Sheet, Stepper } from "../ui";
 
 const EMPTY = {
-  product: "", stock: 0, low_stock_threshold: 5, unit: "pcs", cost_price: 0, sell_price: 0, supplier: "", shelf_life_days: 0,
+  product: "", stock: 0, low_stock_threshold: 5, unit: "pcs", cost_price: 0, sell_price: 0, supplier: "", shelf_life_days: 0, aliases: "",
 };
 
 export default function Stock() {
@@ -131,6 +131,7 @@ function ItemSheet({ item, onClose, onSaved, onArrive }) {
         sell_price: Number(form.sell_price) || 0,
         supplier: form.supplier || "",
         shelf_life_days: Number(form.shelf_life_days) || 0,
+        aliases: form.aliases || "",
       });
       onSaved();
     } catch (err) {
@@ -169,6 +170,7 @@ function ItemSheet({ item, onClose, onSaved, onArrive }) {
           <Field label={t.shelfLife} hint={t.shelfHint}><input type="number" inputMode="numeric" min="0" value={form.shelf_life_days} onChange={num("shelf_life_days")} /></Field>
         </div>
         <Field label={t.supplier}><input value={form.supplier || ""} onChange={set("supplier")} /></Field>
+        <Field label={t.otherNames} hint={t.otherNamesHint}><input value={form.aliases || ""} onChange={set("aliases")} /></Field>
         <button className="btn primary big" disabled={busy || !form.product.trim()}>{t.save}</button>
         {!item.isNew && (
           <div className="two">
